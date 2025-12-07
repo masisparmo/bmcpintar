@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart BMC - Pro Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .bmc-grid { display: grid; grid-template-columns: repeat(10, 1fr); grid-template-rows: repeat(3, minmax(180px, auto)); gap: 0.75rem; }
+        .area-kp { grid-column: 1 / 3; grid-row: 1 / 3; } .area-ka { grid-column: 3 / 5; grid-row: 1 / 2; } .area-kr { grid-column: 3 / 5; grid-row: 2 / 3; } .area-vp { grid-column: 5 / 7; grid-row: 1 / 3; } .area-cr { grid-column: 7 / 9; grid-row: 1 / 2; } .area-ch { grid-column: 7 / 9; grid-row: 2 / 3; } .area-cs { grid-column: 9 / 11; grid-row: 1 / 3; } .area-cst { grid-column: 1 / 6; grid-row: 3 / 4; } .area-rs { grid-column: 6 / 11; grid-row: 3 / 4; }
+        @media (max-width: 1024px) { .bmc-grid { display: flex; flex-direction: column; } .bmc-box { min-height: 150px; } }
+        .bmc-box:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .bmc-box { transition: all 0.2s; }
+        .prose h3 { font-weight: 700; margin-top: 1em; color: #1f2937; font-size: 1.1rem; } .dark .prose h3 { color: #e5e7eb; }
+        .prose ul { list-style: disc; padding-left: 1.2em; } .dark .prose { color: #d1d5db; }
+        .loading-overlay { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(4px); } .dark .loading-overlay { background: rgba(17, 24, 39, 0.95); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast { animation: slideIn 0.3s ease-out forwards; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; } .custom-scroll::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body class="text-gray-800 bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <div id="toastContainer" class="fixed top-20 right-5 z-[100] flex flex-col gap-2"></div>
+    <input type="file" id="fileInput" class="hidden" accept=".sbmc">
+
+    <!-- Navbar (Desktop) -->
+    <nav class="bg-white dark:bg-gray-800 shadow border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-rocket text-blue-600 text-2xl"></i>
+                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">Smart BMC <span class="text-xs font-normal opacity-70">Pro</span></h1>
+                </div>
+                
+                <div class="hidden xl:flex items-center space-x-2">
+                    <button onclick="window.openInfo()" class="text-gray-500 hover:text-blue-600 text-sm font-medium px-2">Panduan</button>
+                    <button onclick="window.toggleTheme()" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><i id="themeIcon" class="fas fa-moon text-xl"></i></button>
+                    <span class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></span>
+                    
+                    <select id="userStage" onchange="window.syncStage(this.value)" class="bg-gray-50 border border-gray-300 text-sm rounded-lg p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white w-32">
+                        <option value="aspiring">🌱 Ideasi</option>
+                        <option value="beginner">🚀 Start-up</option>
+                        <option value="scaleup">📈 Scale-up</option>
+                    </select>
+
+                    <button onclick="window.openAiPrompt()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-magic mr-1"></i> CONTOH</button>
+                    <button onclick="window.openImgPrompt()" class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-image mr-1"></i> PROMPT GAMBAR</button>
+                    <button onclick="window.downloadReport()" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-file-pdf mr-1"></i> PRINT PDF</button>
+                    
+                    <!-- EXPORT IMPORT -->
+                    <button onclick="window.exportData()" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-file-export mr-1"></i> EXPORT</button>
+                    <button onclick="document.getElementById('fileInput').click()" class="bg-orange-100 text-orange-700 hover:bg-orange-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-file-import mr-1"></i> IMPORT</button>
+                    
+                    <!-- CLEAR DATA (Now a Solid Button) -->
+                    <button onclick="window.confirmReset()" class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-trash mr-1"></i> CLEAR DATA</button>
+                </div>
+
+                <div class="xl:hidden"><button onclick="window.toggleTheme()" class="p-2 text-gray-500"><i id="themeIconMobile" class="fas fa-moon text-lg"></i></button></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Controls (Redesigned with Solid Buttons) -->
+    <div class="xl:hidden bg-white dark:bg-gray-800 p-4 border-b dark:border-gray-700 space-y-3">
+        <!-- Row 1: Dropdown -->
+        <select id="userStageMobile" onchange="window.syncStage(this.value)" class="w-full bg-gray-50 border border-gray-300 text-sm rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <option value="aspiring">🌱 Ideasi (Belum ada bisnis)</option>
+            <option value="beginner">🚀 Start-up (Baru berjalan)</option>
+            <option value="scaleup">📈 Scale-up (Ingin ekspansi)</option>
+        </select>
+        
+        <!-- Row 2: Main Actions (4 cols) -->
+        <div class="grid grid-cols-4 gap-2">
+            <button onclick="window.openAiPrompt()" class="bg-indigo-100 text-indigo-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-indigo-200"><i class="fas fa-magic text-sm mb-1"></i> CONTOH</button>
+            <button onclick="window.exportData()" class="bg-blue-100 text-blue-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-blue-200"><i class="fas fa-file-export text-sm mb-1"></i> EXPORT</button>
+            <button onclick="document.getElementById('fileInput').click()" class="bg-orange-100 text-orange-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-orange-200"><i class="fas fa-file-import text-sm mb-1"></i> IMPORT</button>
+            <button onclick="window.downloadReport()" class="bg-green-100 text-green-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-green-200"><i class="fas fa-file-pdf text-sm mb-1"></i> PRINT PDF</button>
+        </div>
+
+        <!-- Row 3: Secondary Actions (Solid Buttons) -->
+        <div class="grid grid-cols-2 gap-2">
+            <button onclick="window.openImgPrompt()" class="bg-purple-100 text-purple-700 py-3 rounded text-xs font-bold uppercase flex items-center justify-center hover:bg-purple-200"><i class="fas fa-image mr-2"></i> PROMPT GAMBAR</button>
+            <button onclick="window.confirmReset()" class="bg-red-100 text-red-700 py-3 rounded text-xs font-bold uppercase flex items-center justify-center hover:bg-red-200"><i class="fas fa-trash mr-2"></i> CLEAR DATA</button>
+        </div>
+
+        <button onclick="window.openInfo()" class="w-full text-center text-xs text-gray-500 underline pt-1">Panduan Lengkap BMC</button>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <div class="mb-6">
+            <label class="block text-sm font-bold mb-1 dark:text-gray-300">Nama Bisnis / Pemilik</label>
+            <input type="text" id="userName" placeholder="Contoh: Kopi Senja / Budi Santoso" class="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white" oninput="window.saveState()">
+        </div>
+
+        <div class="bmc-grid mb-10" id="canvasGrid"></div>
+
+        <div class="flex justify-center mb-10">
+            <button onclick="window.analyzeData()" id="analyzeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105"><i class="fas fa-brain mr-2"></i> Analisa Bisnis Saya (AI Coach)</button>
+        </div>
+
+        <div id="analysisSection" class="hidden grid lg:grid-cols-2 gap-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 flex flex-col h-[500px]">
+                <div class="p-4 bg-indigo-600 text-white font-bold flex justify-between items-center">
+                    <span><i class="fas fa-clipboard-check mr-2"></i> Hasil Analisa</span>
+                    <span id="stageLabel" class="text-xs bg-white/20 px-2 py-1 rounded">Umum</span>
+                </div>
+                <div id="analysisContent" class="p-5 flex-grow overflow-y-auto custom-scroll prose dark:prose-invert max-w-none text-sm"></div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 flex flex-col h-[500px]">
+                <div class="p-4 bg-gray-800 text-white font-bold"><i class="fas fa-comments mr-2"></i> Chat Konsultasi</div>
+                <div id="chatHistory" class="p-4 flex-grow overflow-y-auto custom-scroll space-y-3 bg-gray-50 dark:bg-gray-900/50">
+                    <div class="flex items-start gap-2">
+                        <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">AI</div>
+                        <div class="bg-white dark:bg-gray-700 p-3 rounded-lg border dark:border-gray-600 text-sm shadow-sm max-w-[85%] dark:text-white">Halo! Ada yang ingin didiskusikan?</div>
+                    </div>
+                </div>
+                <div class="p-3 border-t dark:border-gray-700">
+                    <form onsubmit="window.sendChat(event)" class="flex gap-2">
+                        <input id="chatInput" type="text" placeholder="Tanya sesuatu..." class="flex-grow p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Kirim</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ============ MODALS ============ -->
+
+    <!-- Info Modal (UPDATED: SUPER DETAIL) -->
+    <div id="infoModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl p-0 overflow-hidden max-h-[90vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="bg-blue-600 px-6 py-4 flex justify-between items-center shrink-0">
+                <h3 class="text-lg font-bold text-white"><i class="fas fa-book-open mr-2"></i> Kuliah Singkat BMC (Lengkap)</h3>
+                <button onclick="window.closeModals()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll">
+                <div class="prose dark:prose-invert max-w-none text-sm space-y-8">
+                    
+                    <!-- Intro Analogy -->
+                    <div class="bg-blue-50 dark:bg-gray-700 p-5 rounded-xl border-l-4 border-blue-500">
+                        <h4 class="text-blue-800 dark:text-blue-300 font-bold text-lg mb-2">Apa itu BMC? (Analogi Rumah Makan)</h4>
+                        <p class="text-gray-700 dark:text-gray-200 text-base">
+                            Bayangkan bisnis itu seperti sebuah <strong>Rumah Makan</strong>. 
+                            <br>BMC membagi rumah makan itu menjadi 3 area utama:
+                            <ul class="mt-2 list-disc pl-5">
+                                <li><strong>Panggung Depan (Front Stage):</strong> Ruang makan di mana Anda melayani tamu (Pelanggan, Channel, Hubungan).</li>
+                                <li><strong>Panggung Belakang (Back Stage):</strong> Dapur tempat Anda memasak (Aktivitas, Aset, Partner).</li>
+                                <li><strong>Pondasi (Financial):</strong> Kasir tempat uang masuk dan buku tagihan tempat uang keluar (Revenue & Cost).</li>
+                            </ul>
+                        </p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <!-- COLUMN 1: Front Stage + Revenue -->
+                        <div>
+                            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-gray-200 pb-2 mb-4 uppercase tracking-wider"><i class="fas fa-store mr-2"></i> PANGGUNG DEPAN (YANG DILIHAT PELANGGAN)</h4>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">1. Customer Segments (Target Pasar)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Siapa manusianya?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Jangan bilang "Semua Orang". Tembakan Anda harus jitu.</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li><strong>Salah:</strong> Pecinta Kopi.</li>
+                                        <li><strong>Benar:</strong> Mahasiswa yang butuh wifi kencang & kopi murah buat nugas malam.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">2. Value Propositions (Solusi/Keunggulan)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Kenapa mereka harus pilih Anda?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Apa obat sakit kepala yang Anda tawarkan buat masalah mereka?</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li><strong>Masalah:</strong> Mahasiswa duitnya pas-pasan tapi butuh tempat nongkrong lama.</li>
+                                        <li><strong>Solusi Anda:</strong> Kopi Enak Cuma 10 Ribu + Free Wifi 24 Jam.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">3. Channels (Jalur Distribusi)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Gimana caranya ketemu?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Jembatan penghubung antara produk Anda dan pelanggan.</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li><strong>Awareness:</strong> Iklan TikTok, Selebgram Lokal.</li>
+                                        <li><strong>Purchase:</strong> GoFood, GrabFood, Kedai Fisik.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">4. Customer Relationships (Hubungan)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Gimana biar gak putus?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Cara bikin mereka beli lagi, lagi, dan lagi (Retensi).</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li>Kartu Member (Beli 10 Gratis 1).</li>
+                                        <li>Admin WA yang super ramah & fast response.</li>
+                                    </ul>
+                                </div>
+
+                                 <div class="mt-4 pt-4 border-t border-dashed">
+                                    <strong class="text-lg text-green-600 dark:text-green-400 block"><i class="fas fa-coins mr-1"></i> 5. Revenue Streams (Sumber Cuan)</strong>
+                                    <p class="text-gray-700 dark:text-gray-300">Keran uangnya dari mana saja?</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1">
+                                        <li>Jual Kopi (Utama).</li>
+                                        <li>Jual Roti Bakar (Sampingan).</li>
+                                        <li>Jual Biji Kopi Kemasan (Produk tambahan).</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- COLUMN 2: Back Stage + Cost -->
+                        <div>
+                            <h4 class="font-bold text-orange-600 dark:text-orange-400 border-b border-gray-200 pb-2 mb-4 uppercase tracking-wider"><i class="fas fa-tools mr-2"></i> PANGGUNG BELAKANG (DAPUR)</h4>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">6. Key Resources (Aset Wajib)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Apa senjata perangnya?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Hal-hal yang HARUS Anda punya. Kalau gak ada ini, bisnis mati.</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li><strong>Fisik:</strong> Mesin Espresso, Ruko, Motor Delivery.</li>
+                                        <li><strong>Manusia:</strong> Barista Jago, Koki.</li>
+                                        <li><strong>Intelektual:</strong> Resep Rahasia.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">7. Key Activities (Kegiatan Kunci)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Sehari-hari ngapain aja?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Rutinitas paling krusial buat menghasilkan uang.</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li><strong>Produksi:</strong> Belanja ke pasar, Roasting kopi, Masak.</li>
+                                        <li><strong>Marketing:</strong> Bikin konten TikTok, Reply komen IG.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <strong class="text-lg text-gray-900 dark:text-white block">8. Key Partners (Partner Kunci)</strong>
+                                    <p class="text-gray-600 dark:text-gray-400 italic mb-1">"Siapa teman mainnya?"</p>
+                                    <p class="text-gray-700 dark:text-gray-300">Pihak luar yang bikin hidup Anda lebih mudah. Jangan kerja sendirian!</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded">
+                                        <li>Supplier Kopi (Biar stok aman).</li>
+                                        <li>Abang Gojek/Grab (Biar gak repot antar sendiri).</li>
+                                        <li>Influencer Lokal (Biar dipromosiin).</li>
+                                    </ul>
+                                </div>
+
+                                <div class="mt-4 pt-4 border-t border-dashed">
+                                    <strong class="text-lg text-red-600 dark:text-red-400 block"><i class="fas fa-file-invoice-dollar mr-1"></i> 9. Cost Structure (Struktur Biaya)</strong>
+                                    <p class="text-gray-700 dark:text-gray-300">Uang Anda paling banyak bocor buat bayar apa?</p>
+                                    <ul class="list-disc pl-5 text-gray-600 dark:text-gray-400 mt-1">
+                                        <li><strong>Fixed Cost (Tetap):</strong> Sewa Ruko, Gaji Karyawan, Wifi.</li>
+                                        <li><strong>Variable Cost (Berubah):</strong> Beli Susu, Beli Biji Kopi, Cup Plastik.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-700 text-center">
+                        <strong class="block text-yellow-800 dark:text-yellow-200 mb-1">Tips Pro:</strong>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300">Jangan pusing mau isi yang mana duluan. Biasanya dimulai dari <strong>Customer (Siapa)</strong> dulu, baru <strong>Value (Apa)</strong>. Tapi senyamannya Anda saja!</p>
+                    </div>
+
+                </div>
+            </div>
+            <div class="p-4 border-t dark:border-gray-700 flex justify-end shrink-0 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
+                <button onclick="window.closeModals()" class="px-8 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-lg transform hover:scale-105">Siap, Saya Paham!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-lg p-6" onclick="event.stopPropagation()">
+            <h3 id="modalTitle" class="text-lg font-bold mb-1 dark:text-white">Judul</h3>
+            <p id="modalDesc" class="text-xs text-gray-500 dark:text-gray-400 mb-3">Deskripsi</p>
+            <textarea id="modalInput" rows="6" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" placeholder="Isi di sini..."></textarea>
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white dark:border-gray-600">Batal</button>
+                <button onclick="window.saveData()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Prompt Modal -->
+    <div id="aiModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-2 dark:text-white">Buat Contoh Bisnis</h3>
+            <p class="text-sm text-gray-500 mb-4">Masukkan ide bisnis, AI akan mengisi semua kotak.</p>
+            <input id="aiTopic" type="text" placeholder="Contoh: 'Toko Bunga'" class="w-full p-3 border rounded-lg mb-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" onkeypress="if(event.key==='Enter') window.runAi()">
+            <div class="flex justify-end gap-2">
+                <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white dark:border-gray-600">Batal</button>
+                <button onclick="window.runAi()" class="px-4 py-2 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700">Buat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Prompt Modal -->
+    <div id="imgModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-xl p-6" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-2 dark:text-white">Prompt Infografis AI</h3>
+            <p class="text-sm text-gray-500 mb-2">Salin teks ini ke Midjourney/DALL-E:</p>
+            <textarea id="imgPromptText" rows="8" readonly class="w-full p-3 border rounded-lg bg-gray-50 text-xs font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+            <div class="mt-4 flex justify-end gap-2">
+                <button onclick="window.copyToClipboard(document.getElementById('imgPromptText').value)" class="px-4 py-2 bg-purple-100 text-purple-700 rounded text-sm font-bold">Copy</button>
+                <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white dark:border-gray-600">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="fixed inset-0 z-[60] hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-2 text-red-600">Hapus Data?</h3>
+            <p class="text-sm text-gray-500 mb-4">Semua data akan hilang permanen.</p>
+            <div class="flex justify-end gap-2">
+                <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white">Batal</button>
+                <button id="confirmYesBtn" class="px-4 py-2 bg-red-600 text-white rounded text-sm">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loader" class="hidden fixed inset-0 z-[100] bg-white/90 dark:bg-gray-900/90 flex flex-col items-center justify-center">
+        <i class="fas fa-circle-notch fa-spin text-5xl text-blue-600 mb-4"></i>
+        <p class="font-bold text-lg dark:text-white">AI Sedang Bekerja...</p>
+    </div>
+
+    <script>
+        // --- 1. CONFIG & STATE ---
+        let appState = {
+            bmcData: { kp:"",ka:"",kr:"",vp:"",cr:"",ch:"",cs:"",cst:"",rs:"" },
+            chatHistory: [{role:'ai', content:'Halo! Ada yang ingin didiskusikan tentang bisnis Anda?'}],
+            analysisHTML: "",
+            imagePrompt: ""
+        };
+
+        const meta = {
+            kp: { t:"Key Partners (Mitra Utama)", d:"Siapa supplier/mitra strategis?", i:"fa-handshake" },
+            ka: { t:"Key Activities (Aktivitas Utama)", d:"Kegiatan utama biar bisnis jalan?", i:"fa-check-double" },
+            kr: { t:"Key Resources (Sumber Daya Utama)", d:"Aset fisik/intelektual apa yang wajib punya?", i:"fa-box" },
+            vp: { t:"Value Propositions (Nilai)", d:"Apa keunggulan produk? Kenapa orang beli?", i:"fa-gift" },
+            cr: { t:"Relationships (Hubungan Pelanggan)", d:"Cara menjaga hubungan dengan pelanggan?", i:"fa-heart" },
+            ch: { t:"Channels (Saluran)", d:"Lewat mana produk sampai ke pelanggan?", i:"fa-truck" },
+            cs: { t:"Customer Segments (Target)", d:"Siapa target pasar spesifik Anda?", i:"fa-users" },
+            cst: { t:"Cost Structure (Biaya)", d:"Biaya pengeluaran utama apa saja?", i:"fa-file-invoice-dollar" },
+            rs: { t:"Revenue Streams (Pendapatan)", d:"Dari mana saja sumber pendapatan?", i:"fa-cash-register" }
+        };
+
+        let currentModalKey = null;
+        let onConfirmCallback = null;
+        let db;
+
+        // --- 2. INDEXED DB ---
+        function initDB() {
+            const request = indexedDB.open("SmartBMC_DB", 1);
+            request.onerror = (e) => console.error("DB Error", e);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains("state")) {
+                    db.createObjectStore("state", { keyPath: "id" });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                loadState();
+            };
+        }
+
+        window.saveState = function() {
+            if(!db) return;
+            const tx = db.transaction("state", "readwrite");
+            const store = tx.objectStore("state");
+            
+            appState.userName = document.getElementById('userName').value;
+            appState.userStage = document.getElementById('userStage').value;
+            
+            store.put({ id: "current", data: appState });
+        }
+
+        function loadState() {
+            if(!db) return;
+            const tx = db.transaction("state", "readonly");
+            const store = tx.objectStore("state");
+            const req = store.get("current");
+            
+            req.onsuccess = () => {
+                if(req.result) {
+                    appState = req.result.data;
+                    restoreUI();
+                } else {
+                    renderCanvas();
+                }
+            };
+        }
+
+        function restoreUI() {
+            if(appState.userName) document.getElementById('userName').value = appState.userName;
+            if(appState.userStage) window.syncSelect(appState.userStage);
+            renderCanvas();
+            if(appState.analysisHTML) {
+                document.getElementById('analysisSection').classList.remove('hidden');
+                document.getElementById('analysisContent').innerHTML = appState.analysisHTML;
+            }
+            renderChat();
+        }
+
+        // --- 3. UI RENDERING ---
+        function initGrid() {
+            const grid = document.getElementById('canvasGrid');
+            grid.innerHTML = '';
+            Object.keys(meta).forEach(k => {
+                const box = document.createElement('div');
+                box.className = `bmc-box area-${k} bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col cursor-pointer relative group`;
+                if(k === 'vp') box.classList.add('border-blue-400', 'dark:border-blue-600', 'border-2');
+                box.onclick = () => window.edit(k);
+                box.innerHTML = `
+                    <div class="flex items-center mb-2 text-gray-500 dark:text-gray-400 font-bold text-xs uppercase tracking-wider"><i class="fas ${meta[k].i} mr-2"></i> ${meta[k].t}</div>
+                    <div id="txt-${k}" class="flex-grow text-sm whitespace-pre-line text-gray-400 italic">Klik untuk isi...</div>
+                    <span class="absolute top-2 right-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">Edit</span>
+                `;
+                grid.appendChild(box);
+            });
+        }
+
+        function renderCanvas() {
+            Object.keys(appState.bmcData).forEach(k => {
+                const el = document.getElementById(`txt-${k}`);
+                if(el) {
+                    let txt = appState.bmcData[k] || "";
+                    if(txt.trim()) {
+                        el.innerText = txt;
+                        el.className = "flex-grow text-sm whitespace-pre-line text-gray-800 dark:text-gray-200";
+                    } else {
+                        el.innerText = "Klik untuk isi...";
+                        el.className = "flex-grow text-sm whitespace-pre-line text-gray-400 italic";
+                    }
+                }
+            });
+        }
+
+        function renderChat() {
+            const hist = document.getElementById('chatHistory');
+            hist.innerHTML = '';
+            appState.chatHistory.forEach(msg => {
+                const isAI = msg.role === 'ai';
+                const div = document.createElement('div');
+                div.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
+                div.innerHTML = `
+                    ${isAI ? '<div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2">AI</div>' : ''}
+                    <div class="${isAI ? 'bg-white dark:bg-gray-700 border dark:border-gray-600' : 'bg-blue-600 text-white'} p-3 rounded-lg text-sm shadow-sm max-w-[85%] dark:text-white prose dark:prose-invert">
+                        ${msg.content}
+                        ${isAI ? `<button onclick="window.copyText('${msg.content.replace(/'/g, "\\'").replace(/\n/g, ' ')}')" class="ml-2 text-gray-400 hover:text-blue-500"><i class="fas fa-copy"></i></button>` : ''}
+                    </div>
+                `;
+                hist.appendChild(div);
+            });
+            hist.scrollTop = hist.scrollHeight;
+        }
+
+        // --- 4. EXPORT / IMPORT ---
+        window.exportData = function() {
+            window.saveState();
+            const dataStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const name = (document.getElementById('userName').value || "unnamed").replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
+            const filename = `${name}-bmc-${date}.sbmc`;
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.showToast("Data berhasil diexport!");
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedData = JSON.parse(e.target.result);
+                    if(loadedData.bmcData) {
+                        appState = loadedData;
+                        restoreUI();
+                        window.saveState();
+                        window.showToast("Data berhasil diimport!");
+                    } else {
+                        alert("File tidak valid.");
+                    }
+                } catch(err) {
+                    alert("Gagal membaca file.");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        // --- 5. LOGIC & EVENTS ---
+        window.syncSelect = function(val) {
+            document.getElementById('userStage').value = val;
+            document.getElementById('userStageMobile').value = val;
+            window.saveState();
+        }
+        window.syncStage = window.syncSelect;
+
+        window.edit = function(k) {
+            currentModalKey = k;
+            document.getElementById('modalTitle').innerText = meta[k].t;
+            document.getElementById('modalDesc').innerText = meta[k].d;
+            document.getElementById('modalInput').value = appState.bmcData[k];
+            window.toggle('editModal', true);
+        }
+
+        window.saveData = function() {
+            appState.bmcData[currentModalKey] = document.getElementById('modalInput').value;
+            renderCanvas();
+            window.saveState();
+            window.closeModals();
+        }
+
+        // --- 6. AI & UTILS ---
+        window.runAi = async function() {
+            const topic = document.getElementById('aiTopic').value;
+            if(!topic) return alert("Isi topik!");
+            window.closeModals();
+            document.getElementById('loader').classList.remove('hidden');
+            
+            const stage = document.getElementById('userStage').value;
+            const prompt = `Buat BMC untuk "${topic}" tahap ${stage}. JSON valid keys: kp,ka,kr,vp,cr,ch,cs,cst,rs. Isi poin bahasa Indonesia.`;
+            
+            try {
+                const res = await callApi(prompt, true);
+                let jsonStr = res.substring(res.indexOf('{'), res.lastIndexOf('}')+1);
+                let json = JSON.parse(jsonStr);
+                
+                const map = { 'kp':['partner'], 'ka':['activ'], 'kr':['resource'], 'vp':['value'], 'cr':['relation'], 'ch':['channel'], 'cs':['segment'], 'cst':['cost'], 'rs':['revenue'] };
+                for(let k in json) {
+                    let clean = k.toLowerCase();
+                    let target = null;
+                    for(let m in map) if(map[m].some(x => clean.includes(x))) target = m;
+                    if(!target && appState.bmcData.hasOwnProperty(clean)) target = clean;
+                    if(target) {
+                        let val = json[k];
+                        if(Array.isArray(val)) val = val.map(x=>"• "+x).join('\n');
+                        appState.bmcData[target] = val;
+                    }
+                }
+                renderCanvas();
+                window.saveState();
+                window.showToast("Contoh dibuat!");
+            } catch(e) { alert("Gagal AI"); }
+            finally { document.getElementById('loader').classList.add('hidden'); }
+        }
+
+        window.analyzeData = async function() {
+            let filled=0; for(let k in appState.bmcData) if(appState.bmcData[k].trim()) filled++;
+            if(filled<3) return alert("Isi minimal 3 kotak");
+            
+            const btn = document.getElementById('analyzeBtn'); btn.disabled=true; btn.innerText="Menganalisa...";
+            document.getElementById('analysisSection').classList.remove('hidden');
+            
+            const prompt = `Analisa BMC: ${JSON.stringify(appState.bmcData)}. Output HTML (h3, p, ul, li). Bahasa Indonesia.`;
+            try {
+                const res = await callApi(prompt, false);
+                const clean = res.replace(/```html/g,'').replace(/```/g,'');
+                document.getElementById('analysisContent').innerHTML = clean;
+                appState.analysisHTML = clean;
+                window.saveState();
+            } catch(e) { alert("Gagal"); }
+            finally { btn.disabled=false; btn.innerText="Analisa Bisnis Saya (AI Coach)"; }
+        }
+
+        window.sendChat = async function(e) {
+            e.preventDefault();
+            const inp = document.getElementById('chatInput');
+            if(!inp.value) return;
+            const q = inp.value; inp.value='';
+            
+            appState.chatHistory.push({role:'user', content:q});
+            renderChat();
+            
+            try {
+                const res = await callApi(`Context BMC: ${JSON.stringify(appState.bmcData)}. Q: ${q}. Answer HTML.`, false);
+                const clean = res.replace(/```html/g,'').replace(/```/g,'');
+                appState.chatHistory.push({role:'ai', content:clean});
+                renderChat();
+                window.saveState();
+            } catch(e) { alert("Gagal kirim"); }
+        }
+
+        async function callApi(txt, json) {
+            const key = ""; 
+            const body = { contents:[{parts:[{text:txt}]}] };
+            if(json) body.generationConfig = { responseMimeType: "application/json" };
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, 
+                { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+            const d = await r.json();
+            return d.candidates[0].content.parts[0].text;
+        }
+
+        // --- COMMON UTILS ---
+        window.toggle = function(id, s) { document.getElementById(id).classList.toggle('hidden', !s); }
+        window.closeModals = function() { document.querySelectorAll('[id$="Modal"]').forEach(el=>el.classList.add('hidden')); }
+        window.openAiPrompt = function() { window.toggle('aiModal',true); }
+        window.openInfo = function() { window.toggle('infoModal',true); }
+        window.confirmReset = function() { onConfirmCallback = () => { 
+            appState = { bmcData:{kp:"",ka:"",kr:"",vp:"",cr:"",ch:"",cs:"",cst:"",rs:""}, chatHistory:[], analysisHTML:"" };
+            window.saveState(); restoreUI(); window.closeModals(); window.showToast("Reset berhasil");
+        }; window.toggle('confirmModal',true); }
+        
+        document.getElementById('confirmYesBtn').onclick = () => { if(onConfirmCallback) onConfirmCallback(); window.closeModals(); };
+
+        window.openImgPrompt = function() {
+            let val = k => (appState.bmcData[k]||"N/A").replace(/\n/g,", ").substring(0,100);
+            let txt = `Create vertical 9:16 Infographic Poster for BMC.\nTopic: ${document.getElementById('userName').value}\n` +
+            `Partners: ${val('kp')}\nActivities: ${val('ka')}\nResources: ${val('kr')}\nValue: ${val('vp')}\nRelationships: ${val('cr')}\nChannels: ${val('ch')}\nSegments: ${val('cs')}\nCosts: ${val('cst')}\nRevenue: ${val('rs')}\nStyle: Modern flat vector, blue-orange theme. --ar 9:16`;
+            document.getElementById('imgPromptText').value = txt;
+            window.toggle('imgModal',true);
+        }
+
+        window.downloadReport = function() {
+             const name = document.getElementById('userName').value || "Bisnis";
+             const getVal = (k) => (appState.bmcData[k]||"-").replace(/\n/g,'<br>');
+             const html = `<!DOCTYPE html><html><head><title>Laporan BMC</title><style>body{font-family:sans-serif;padding:20px}.box{border:1px solid #333;padding:10px;margin-bottom:10px}h3{margin:0 0 5px;border-bottom:1px solid #ccc}</style></head><body><h1>Laporan BMC: ${name}</h1>${Object.keys(meta).map(k=>`<div class="box"><h3>${meta[k].t}</h3><p>${getVal(k)}</p></div>`).join('')}<hr><h2>Analisa</h2>${appState.analysisHTML}<script>window.print()<\/script></body></html>`;
+             const blob = new Blob([html], {type:'text/html'});
+             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Laporan_${name}.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+        
+        window.copyToClipboard = function(txt) {
+             const ta = document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); window.showToast("Disalin");
+        }
+        window.copyText = function(txt) { window.copyToClipboard(txt); }
+
+        window.showToast = function(msg) {
+            const t = document.createElement('div'); t.className = "toast p-4 bg-green-600 text-white rounded-lg shadow"; t.innerText = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(()=>t.remove(),3000);
+        }
+        
+        window.toggleTheme = function() { document.documentElement.classList.toggle('dark'); }
+        if(localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+
+        // Start
+        initGrid();
+        initDB();
+    </script>
+</body>
+</html>

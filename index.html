@@ -45,6 +45,7 @@
                 </div>
                 
                 <div class="hidden xl:flex items-center space-x-2">
+                    <button onclick="window.openSettings()" class="text-gray-500 hover:text-blue-600 p-2 rounded-lg transition" title="Pengaturan API"><i class="fas fa-cog text-xl"></i></button>
                     <button onclick="window.openInfo()" class="text-gray-500 hover:text-blue-600 text-sm font-medium px-2">Panduan</button>
                     <button onclick="window.toggleTheme()" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><i id="themeIcon" class="fas fa-moon text-xl"></i></button>
                     <span class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></span>
@@ -67,7 +68,10 @@
                     <button onclick="window.confirmReset()" class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-trash mr-1"></i> CLEAR DATA</button>
                 </div>
 
-                <div class="xl:hidden"><button onclick="window.toggleTheme()" class="p-2 text-gray-500"><i id="themeIconMobile" class="fas fa-moon text-lg"></i></button></div>
+                <div class="xl:hidden flex items-center gap-2">
+                    <button onclick="window.openSettings()" class="p-2 text-gray-500"><i class="fas fa-cog text-lg"></i></button>
+                    <button onclick="window.toggleTheme()" class="p-2 text-gray-500"><i id="themeIconMobile" class="fas fa-moon text-lg"></i></button>
+                </div>
             </div>
         </div>
     </nav>
@@ -138,6 +142,39 @@
     </main>
 
     <!-- ============ MODALS ============ -->
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-4 dark:text-white"><i class="fas fa-cog mr-2"></i> Pengaturan API</h3>
+
+            <div class="mb-4">
+                <label class="block text-sm font-bold mb-2 dark:text-gray-300">Gemini API Key</label>
+                <div class="relative">
+                    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full p-3 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none pr-10">
+                    <button onclick="window.toggleKeyVisibility()" class="absolute right-3 top-3 text-gray-500 hover:text-blue-600 focus:outline-none">
+                        <i id="eyeIcon" class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Key disimpan di browser Anda (Local Storage).</p>
+            </div>
+
+            <div class="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg mb-6 text-sm">
+                <strong class="block text-blue-800 dark:text-blue-300 mb-2">Cara Mendapatkan API Key Gratis:</strong>
+                <ol class="list-decimal pl-4 space-y-1 text-gray-700 dark:text-gray-300">
+                    <li>Kunjungi <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 dark:text-blue-400 underline">Google AI Studio</a>.</li>
+                    <li>Login dengan akun Google Anda.</li>
+                    <li>Klik tombol <strong>"Create API key"</strong>.</li>
+                    <li>Salin kode tersebut dan tempel di sini.</li>
+                </ol>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">Batal</button>
+                <button onclick="window.saveSettings()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold shadow-lg transform hover:scale-105 transition">Simpan</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Info Modal (UPDATED: SUPER DETAIL) -->
     <div id="infoModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
@@ -537,6 +574,38 @@
             window.closeModals();
         }
 
+        // --- SETTINGS LOGIC ---
+        window.openSettings = function() {
+            const key = localStorage.getItem('geminiApiKey') || "";
+            document.getElementById('apiKeyInput').value = key;
+            window.toggle('settingsModal', true);
+        }
+
+        window.saveSettings = function() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if(key) {
+                localStorage.setItem('geminiApiKey', key);
+                window.showToast("API Key berhasil disimpan!");
+                window.closeModals();
+            } else {
+                alert("API Key tidak boleh kosong!");
+            }
+        }
+
+        window.toggleKeyVisibility = function() {
+            const input = document.getElementById('apiKeyInput');
+            const icon = document.getElementById('eyeIcon');
+            if(input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         // --- 6. AI & UTILS ---
         window.runAi = async function() {
             const topic = document.getElementById('aiTopic').value;
@@ -608,11 +677,26 @@
         }
 
         async function callApi(txt, json) {
-            const key = ""; 
+            const key = localStorage.getItem('geminiApiKey');
+            if(!key) {
+                alert("API Key belum diset! Silakan buka Pengaturan (Ikon Gerigi) dan masukkan API Key Gemini Anda.");
+                window.openSettings();
+                throw new Error("No API Key");
+            }
+
             const body = { contents:[{parts:[{text:txt}]}] };
             if(json) body.generationConfig = { responseMimeType: "application/json" };
-            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, 
+
+            // Using gemini-2.5-flash
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
                 { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+
+            if(!r.ok) {
+                 const err = await r.json();
+                 alert("API Error: " + (err.error?.message || "Unknown error"));
+                 throw new Error(err.error?.message);
+            }
+
             const d = await r.json();
             return d.candidates[0].content.parts[0].text;
         }

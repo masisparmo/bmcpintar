@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart BMC - Pro Version</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
@@ -28,6 +29,21 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast { animation: slideIn 0.3s ease-out forwards; }
         .custom-scroll::-webkit-scrollbar { width: 4px; } .custom-scroll::-webkit-scrollbar-thumb { background-color: #ccc; border-radius: 4px; }
+
+        /* Typing Indicator */
+        .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 10px 15px; background: #e0e7ff; border-radius: 12px; width: fit-content; }
+        .dark .typing-indicator { background: #374151; }
+        .typing-dot { width: 6px; height: 6px; background: #6366f1; border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+        .dark .typing-dot { background: #a5b4fc; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* Progress Bar */
+        .progress-container { width: 100%; background-color: #e5e7eb; border-radius: 9999px; overflow: hidden; height: 8px; margin-top: 10px; }
+        .dark .progress-container { background-color: #4b5563; }
+        .progress-bar { height: 100%; background-color: #2563eb; width: 0%; animation: progressIndeterminate 2s infinite ease-in-out; }
+        @keyframes progressIndeterminate { 0% { width: 0%; margin-left: 0; } 50% { width: 70%; margin-left: 15%; } 100% { width: 0%; margin-left: 100%; } }
     </style>
 </head>
 <body class="text-gray-800 bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -496,10 +512,13 @@
                 const isAI = msg.role === 'ai';
                 const div = document.createElement('div');
                 div.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
+
+                const displayContent = isAI ? marked.parse(msg.content) : msg.content;
+
                 div.innerHTML = `
                     ${isAI ? '<div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2">AI</div>' : ''}
                     <div class="${isAI ? 'bg-white dark:bg-gray-700 border dark:border-gray-600' : 'bg-blue-600 text-white'} p-3 rounded-lg text-sm shadow-sm max-w-[85%] dark:text-white prose dark:prose-invert">
-                        ${msg.content}
+                        ${displayContent}
                         ${isAI ? `<button onclick="window.copyText('${msg.content.replace(/'/g, "\\'").replace(/\n/g, ' ')}')" class="ml-2 text-gray-400 hover:text-blue-500"><i class="fas fa-copy"></i></button>` : ''}
                     </div>
                 `;
@@ -646,16 +665,25 @@
             
             const btn = document.getElementById('analyzeBtn'); btn.disabled=true; btn.innerText="Menganalisa...";
             document.getElementById('analysisSection').classList.remove('hidden');
+            showAnalysisLoading(true);
             
-            const prompt = `Analisa BMC: ${JSON.stringify(appState.bmcData)}. Output HTML (h3, p, ul, li). Bahasa Indonesia.`;
+            const prompt = `Analisa BMC: ${JSON.stringify(appState.bmcData)}. Output in Markdown format. Bahasa Indonesia.`;
             try {
                 const res = await callApi(prompt, false);
-                const clean = res.replace(/```html/g,'').replace(/```/g,'');
-                document.getElementById('analysisContent').innerHTML = clean;
+                let clean = res;
+                if (clean.startsWith('```markdown')) clean = clean.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+                else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+                const html = marked.parse(clean);
+                document.getElementById('analysisContent').innerHTML = html;
                 appState.analysisHTML = clean;
                 window.saveState();
             } catch(e) { alert("Gagal"); }
-            finally { btn.disabled=false; btn.innerText="Analisa Bisnis Saya (AI Coach)"; }
+            finally {
+                btn.disabled=false;
+                btn.innerText="Analisa Bisnis Saya (AI Coach)";
+                showAnalysisLoading(false);
+            }
         }
 
         window.sendChat = async function(e) {
@@ -666,14 +694,23 @@
             
             appState.chatHistory.push({role:'user', content:q});
             renderChat();
+            showTypingIndicator();
             
             try {
-                const res = await callApi(`Context BMC: ${JSON.stringify(appState.bmcData)}. Q: ${q}. Answer HTML.`, false);
-                const clean = res.replace(/```html/g,'').replace(/```/g,'');
+                const res = await callApi(`Context BMC: ${JSON.stringify(appState.bmcData)}. Q: ${q}. Answer in Markdown format.`, false);
+                removeTypingIndicator();
+
+                let clean = res;
+                if (clean.startsWith('```markdown')) clean = clean.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+                else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
                 appState.chatHistory.push({role:'ai', content:clean});
                 renderChat();
                 window.saveState();
-            } catch(e) { alert("Gagal kirim"); }
+            } catch(e) {
+                removeTypingIndicator();
+                alert("Gagal kirim");
+            }
         }
 
         async function callApi(txt, json) {
@@ -742,6 +779,57 @@
         
         window.toggleTheme = function() { document.documentElement.classList.toggle('dark'); }
         if(localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+
+        function showTypingIndicator() {
+            const hist = document.getElementById('chatHistory');
+            if(document.getElementById('typingIndicator')) return;
+            const div = document.createElement('div');
+            div.id = 'typingIndicator';
+            div.className = 'flex justify-start';
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2">AI</div>
+                <div class="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            hist.appendChild(div);
+            hist.scrollTop = hist.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('typingIndicator');
+            if(el) el.remove();
+        }
+
+        function showAnalysisLoading(show) {
+            const container = document.getElementById('analysisContent');
+            if(show) {
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full space-y-4">
+                        <i class="fas fa-brain fa-bounce text-4xl text-blue-500"></i>
+                        <div class="text-center">
+                            <h4 class="font-bold text-gray-700 dark:text-gray-200">Sedang Menganalisa Bisnis Anda...</h4>
+                            <p class="text-xs text-gray-500">Mohon tunggu, AI sedang berpikir.</p>
+                        </div>
+                        <div class="w-3/4 max-w-xs">
+                            <div class="progress-container">
+                                <div class="progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // If show is false, we might want to do nothing if content was replaced by result,
+                // but if an error occurred, we should probably clear the loading state.
+                // However, since analyzeData overwrites innerHTML on success,
+                // this else block is mainly useful for error cleanup.
+                if(container.innerHTML.includes('Sedang Menganalisa')) {
+                     container.innerHTML = '';
+                }
+            }
+        }
 
         // Start
         initGrid();

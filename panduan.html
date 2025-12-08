@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panduan Penggunaan - BMC Pro</title>
+    <link rel="icon" type="image/png" href="favicon-32x32.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .prose h3 { font-weight: 700; margin-top: 1.5em; color: #1f2937; font-size: 1.25rem; } .dark .prose h3 { color: #e5e7eb; }
+        .prose ul { list-style: disc; padding-left: 1.5em; margin-bottom: 1em; } .dark .prose { color: #d1d5db; }
+        .prose p { margin-bottom: 1em; line-height: 1.6; }
+        .prose strong { color: #111827; font-weight: 600; } .dark .prose strong { color: #fff; }
+        .step-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #2563eb; color: white; border-radius: 50%; font-size: 12px; font-weight: bold; margin-right: 8px; }
+        .screenshot { border: 1px solid #e5e7eb; border-radius: 8px; margin: 10px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .dark .screenshot { border-color: #4b5563; }
+    </style>
+</head>
+<body class="text-gray-800 bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-gray-800 shadow border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <img src="logo-bmc_pintar_ku.png" alt="Logo" class="h-10 w-auto">
+                    <h1 class="text-lg font-bold text-gray-900 dark:text-white">BMC Pro <span class="text-xs font-normal opacity-70">Panduan</span></h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.toggleTheme()" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><i id="themeIcon" class="fas fa-moon text-xl"></i></button>
+                    <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm uppercase transition">Kembali ke Aplikasi</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 py-10">
+
+        <div class="mb-10 text-center">
+            <h1 class="text-4xl font-bold mb-4 text-blue-800 dark:text-blue-400">Panduan Lengkap Penggunaan</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400">Maksimalkan potensi bisnis Anda dengan bantuan AI.</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-8 border dark:border-gray-700">
+
+            <!-- Table of Contents -->
+            <div class="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg mb-8">
+                <h4 class="font-bold mb-2 uppercase text-xs text-gray-500 tracking-wider">Daftar Isi</h4>
+                <ul class="space-y-1 text-sm text-blue-600 dark:text-blue-400">
+                    <li><a href="#api" class="hover:underline">1. Cara Mendapatkan API Key Gratis</a></li>
+                    <li><a href="#isi-bmc" class="hover:underline">2. Mengisi Business Model Canvas</a></li>
+                    <li><a href="#ai-features" class="hover:underline">3. Fitur Canggih AI (Analisa, SWOT, Action Plan)</a></li>
+                    <li><a href="#history" class="hover:underline">4. Menyimpan & Mengelola Data</a></li>
+                </ul>
+            </div>
+
+            <div class="prose dark:prose-invert max-w-none">
+
+                <!-- Section 1 -->
+                <section id="api" class="mb-12 border-b dark:border-gray-700 pb-8">
+                    <h3 class="flex items-center text-2xl mb-4 text-blue-700 dark:text-blue-300">
+                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm mr-3">1</span>
+                        Cara Mendapatkan API Key Gratis
+                    </h3>
+                    <p>Aplikasi ini menggunakan kecerdasan buatan (AI) dari Google Gemini. Agar bisa berjalan, Anda memerlukan "kunci" (API Key) yang bisa didapatkan <strong>gratis</strong>.</p>
+
+                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400 mb-4">
+                        <strong>Penting:</strong> API Key ini bersifat rahasia. Jangan bagikan ke orang lain. Aplikasi ini hanya menyimpannya di browser Anda sendiri (Local Storage).
+                    </div>
+
+                    <ol class="space-y-4">
+                        <li>
+                            <span class="step-num">1</span>
+                            Buka website <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-600 underline font-bold">Google AI Studio</a>.
+                        </li>
+                        <li>
+                            <span class="step-num">2</span>
+                            Login menggunakan akun Google (Gmail) Anda.
+                        </li>
+                        <li>
+                            <span class="step-num">3</span>
+                            Klik tombol biru besar bertuliskan <strong>"Create API key"</strong>.
+                        </li>
+                        <li>
+                            <span class="step-num">4</span>
+                            Salin kode panjang yang muncul (biasanya diawali huruf <code>AIzaSy...</code>).
+                        </li>
+                        <li>
+                            <span class="step-num">5</span>
+                            Kembali ke aplikasi BMC Pro, klik ikon <strong>Gerigi (Pengaturan)</strong> di pojok kanan atas, tempel kode tersebut, dan klik <strong>SIMPAN</strong>.
+                        </li>
+                    </ol>
+                </section>
+
+                <!-- Section 2 -->
+                <section id="isi-bmc" class="mb-12 border-b dark:border-gray-700 pb-8">
+                    <h3 class="flex items-center text-2xl mb-4 text-teal-700 dark:text-teal-300">
+                        <span class="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm mr-3">2</span>
+                        Mengisi Business Model Canvas
+                    </h3>
+                    <p>Ada dua cara untuk mengisi 9 kotak BMC:</p>
+
+                    <h4 class="text-lg font-bold mb-2">Cara Manual</h4>
+                    <p>Klik salah satu kotak (misal: "Customer Segments"). Sebuah jendela akan muncul. Ketik ide Anda di sana, lalu klik "Simpan". Kotak akan terisi.</p>
+
+                    <h4 class="text-lg font-bold mb-2">Cara Otomatis (Pakai AI)</h4>
+                    <p>Bingung mau isi apa? Biarkan AI membantu!</p>
+                    <ul>
+                        <li>Klik tombol <strong>"CONTOH"</strong> di menu atas.</li>
+                        <li>Masukkan jenis bisnis Anda (contoh: "Toko Hijab Online" atau "Aplikasi Bengkel").</li>
+                        <li>Tekan Enter. Dalam hitungan detik, ke-9 kotak akan terisi otomatis dengan contoh yang relevan.</li>
+                        <li>Anda bisa mengedit isinya lagi secara manual jika ada yang kurang pas.</li>
+                    </ul>
+                </section>
+
+                <!-- Section 3 -->
+                <section id="ai-features" class="mb-12 border-b dark:border-gray-700 pb-8">
+                    <h3 class="flex items-center text-2xl mb-4 text-purple-700 dark:text-purple-300">
+                        <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm mr-3">3</span>
+                        Fitur Canggih AI
+                    </h3>
+                    <p>Setelah BMC terisi (minimal 3 kotak), Anda bisa menggunakan fitur analisa:</p>
+
+                    <div class="grid md:grid-cols-2 gap-6 mt-6">
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                            <h4 class="font-bold text-blue-600 dark:text-blue-400 mb-2"><i class="fas fa-magic mr-2"></i> Analisa Bisnis</h4>
+                            <p class="text-sm">Klik tombol besar "Analisa Bisnis Saya". AI akan membaca BMC Anda dan memberikan masukan, kritik, serta saran perbaikan. Hasil analisa ini bisa Anda <strong>Edit</strong> jika ingin menambahkan catatan sendiri.</p>
+                        </div>
+
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                            <h4 class="font-bold text-teal-600 dark:text-teal-400 mb-2"><i class="fas fa-list-check mr-2"></i> Action Plan</h4>
+                            <p class="text-sm">Fitur unggulan! Klik tombol "Action Plan". AI akan membuatkan jadwal kerja <strong>30 Hari</strong> berdasarkan tahap bisnis Anda (Ideasi/Startup/Scaleup). Rencana ini bisa di-download terpisah sebagai PDF.</p>
+                        </div>
+
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                            <h4 class="font-bold text-orange-600 dark:text-orange-400 mb-2"><i class="fas fa-bolt mr-2"></i> SWOT</h4>
+                            <p class="text-sm">Klik "Analisa SWOT" untuk melihat Kekuatan, Kelemahan, Peluang, dan Ancaman bisnis Anda secara instan.</p>
+                        </div>
+
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
+                            <h4 class="font-bold text-indigo-600 dark:text-indigo-400 mb-2"><i class="fas fa-chalkboard-teacher mr-2"></i> Pitch Deck</h4>
+                            <p class="text-sm">Butuh presentasi ke investor? Klik "Pitch Deck" untuk mendapatkan kerangka slide presentasi yang profesional.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4 -->
+                <section id="history" class="mb-8">
+                    <h3 class="flex items-center text-2xl mb-4 text-red-700 dark:text-red-300">
+                        <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-sm mr-3">4</span>
+                        Menyimpan & Mengelola Data
+                    </h3>
+
+                    <ul class="space-y-2">
+                        <li><strong>Simpan (Save):</strong> Klik tombol "SIMPAN" untuk menyimpan snapshot BMC Anda saat ini ke Riwayat.</li>
+                        <li><strong>Auto-Save:</strong> Aplikasi otomatis menyimpan pekerjaan Anda saat Anda berpindah tab atau menutup browser (hanya jika ada perubahan data).</li>
+                        <li><strong>Riwayat (History):</strong> Klik ikon Jam/History untuk melihat daftar simpanan Anda. Anda bisa memuat ulang (Load) data lama.</li>
+                        <li><strong>Hapus (Delete):</strong> Di menu Riwayat, Anda bisa menghapus satu per satu, atau menggunakan tombol <strong>"Hapus Semua"</strong> untuk membersihkan seluruh riwayat sekaligus (Hati-hati, tidak bisa dikembalikan!).</li>
+                        <li><strong>Export/Import:</strong> Gunakan tombol Export untuk menyimpan data ke file <code>.sbmc</code> di komputer (aman sebagai backup). Gunakan Import untuk membukanya kembali.</li>
+                        <li><strong>Cetak PDF:</strong> Klik "Print PDF" untuk mengunduh laporan lengkap BMC + Hasil Analisa + Chat Konsultasi.</li>
+                    </ul>
+                </section>
+
+            </div>
+
+            <div class="mt-10 pt-6 border-t dark:border-gray-700 text-center">
+                <a href="index.html" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 uppercase">Mulai Sekarang</a>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-gray-500 dark:text-gray-400 text-sm">&copy; 2024 BMC Pro. Built with ❤️ and AI.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        }
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body>
+</html>

@@ -22,8 +22,8 @@
         .prose p { margin-bottom: 1em; line-height: 1.6; }
         .prose strong { color: #111827; font-weight: 600; } .dark .prose strong { color: #fff; }
         .step-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: #2563eb; color: white; border-radius: 50%; font-size: 12px; font-weight: bold; margin-right: 8px; }
-        .screenshot { border: 1px solid #e5e7eb; border-radius: 8px; margin: 10px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .dark .screenshot { border-color: #4b5563; }
+        .screenshot { border: 1px solid #e5e7eb; border-radius: 8px; margin: 10px 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; height: auto; }
+        .dark .screenshot { border-color: #4b5563; opacity: 0.9; }
     </style>
 </head>
 <body class="text-gray-800 bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -57,19 +57,37 @@
             <div class="bg-gray-50 dark:bg-gray-700/30 p-4 rounded-lg mb-8">
                 <h4 class="font-bold mb-2 uppercase text-xs text-gray-500 tracking-wider">Daftar Isi</h4>
                 <ul class="space-y-1 text-sm text-blue-600 dark:text-blue-400">
-                    <li><a href="#api" class="hover:underline">1. Cara Mendapatkan API Key Gratis</a></li>
-                    <li><a href="#isi-bmc" class="hover:underline">2. Mengisi Business Model Canvas</a></li>
-                    <li><a href="#ai-features" class="hover:underline">3. Fitur Canggih AI (Analisa, SWOT, Action Plan)</a></li>
-                    <li><a href="#history" class="hover:underline">4. Menyimpan & Mengelola Data</a></li>
+                    <li><a href="#alur" class="hover:underline">1. Alur Singkat Penggunaan</a></li>
+                    <li><a href="#api" class="hover:underline">2. Cara Mendapatkan API Key Gratis</a></li>
+                    <li><a href="#isi-bmc" class="hover:underline">3. Mengisi Business Model Canvas</a></li>
+                    <li><a href="#ai-features" class="hover:underline">4. Fitur Canggih AI (Analisa, SWOT, Action Plan)</a></li>
+                    <li><a href="#history" class="hover:underline">5. Menyimpan & Mengelola Data</a></li>
                 </ul>
             </div>
 
             <div class="prose dark:prose-invert max-w-none">
 
-                <!-- Section 1 -->
+                <!-- Section 1 (New): Alur Penggunaan -->
+                <section id="alur" class="mb-12 border-b dark:border-gray-700 pb-8">
+                     <h3 class="flex items-center text-2xl mb-4 text-green-700 dark:text-green-300">
+                        <span class="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm mr-3">1</span>
+                        Alur Singkat Penggunaan
+                    </h3>
+                    <p>Berikut adalah langkah ringkas untuk mulai menggunakan aplikasi BMC Pro:</p>
+                    <img src="https://placehold.co/800x400/e2e8f0/1e293b?text=Overview+Flow+App" class="screenshot" alt="Alur Penggunaan Aplikasi">
+                    <ol class="space-y-2">
+                        <li><strong>Dapatkan API Key:</strong> Lakukan sekali saja di awal agar fitur AI bisa bekerja.</li>
+                        <li><strong>Input Bisnis:</strong> Masukkan ide bisnis manual atau minta AI buatkan contoh.</li>
+                        <li><strong>Analisa:</strong> Minta AI menganalisa model bisnis Anda, membuat SWOT, atau Pitch Deck.</li>
+                        <li><strong>Action Plan:</strong> Buat rencana kerja 30 hari yang siap dieksekusi.</li>
+                        <li><strong>Simpan & Cetak:</strong> Simpan ke riwayat browser atau cetak laporan PDF.</li>
+                    </ol>
+                </section>
+
+                <!-- Section 2 -->
                 <section id="api" class="mb-12 border-b dark:border-gray-700 pb-8">
                     <h3 class="flex items-center text-2xl mb-4 text-blue-700 dark:text-blue-300">
-                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm mr-3">1</span>
+                        <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm mr-3">2</span>
                         Cara Mendapatkan API Key Gratis
                     </h3>
                     <p>Aplikasi ini menggunakan kecerdasan buatan (AI) dari Google Gemini. Agar bisa berjalan, Anda memerlukan "kunci" (API Key) yang bisa didapatkan <strong>gratis</strong>.</p>
@@ -77,6 +95,8 @@
                     <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400 mb-4">
                         <strong>Penting:</strong> API Key ini bersifat rahasia. Jangan bagikan ke orang lain. Aplikasi ini hanya menyimpannya di browser Anda sendiri (Local Storage).
                     </div>
+
+                    <img src="https://placehold.co/800x400/e2e8f0/1e293b?text=Google+AI+Studio+Interface" class="screenshot" alt="Tampilan Google AI Studio">
 
                     <ol class="space-y-4">
                         <li>
@@ -100,12 +120,13 @@
                             Kembali ke aplikasi BMC Pro, klik ikon <strong>Gerigi (Pengaturan)</strong> di pojok kanan atas, tempel kode tersebut, dan klik <strong>SIMPAN</strong>.
                         </li>
                     </ol>
+                    <img src="https://placehold.co/800x300/e2e8f0/1e293b?text=Settings+Modal+Input+API+Key" class="screenshot" alt="Pengaturan API Key di Aplikasi">
                 </section>
 
-                <!-- Section 2 -->
+                <!-- Section 3 -->
                 <section id="isi-bmc" class="mb-12 border-b dark:border-gray-700 pb-8">
                     <h3 class="flex items-center text-2xl mb-4 text-teal-700 dark:text-teal-300">
-                        <span class="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm mr-3">2</span>
+                        <span class="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm mr-3">3</span>
                         Mengisi Business Model Canvas
                     </h3>
                     <p>Ada dua cara untuk mengisi 9 kotak BMC:</p>
@@ -115,6 +136,7 @@
 
                     <h4 class="text-lg font-bold mb-2">Cara Otomatis (Pakai AI)</h4>
                     <p>Bingung mau isi apa? Biarkan AI membantu!</p>
+                    <img src="https://placehold.co/800x200/e2e8f0/1e293b?text=AI+Example+Prompt" class="screenshot" alt="Fitur Contoh AI">
                     <ul>
                         <li>Klik tombol <strong>"CONTOH"</strong> di menu atas.</li>
                         <li>Masukkan jenis bisnis Anda (contoh: "Toko Hijab Online" atau "Aplikasi Bengkel").</li>
@@ -123,13 +145,15 @@
                     </ul>
                 </section>
 
-                <!-- Section 3 -->
+                <!-- Section 4 -->
                 <section id="ai-features" class="mb-12 border-b dark:border-gray-700 pb-8">
                     <h3 class="flex items-center text-2xl mb-4 text-purple-700 dark:text-purple-300">
-                        <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm mr-3">3</span>
+                        <span class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm mr-3">4</span>
                         Fitur Canggih AI
                     </h3>
                     <p>Setelah BMC terisi (minimal 3 kotak), Anda bisa menggunakan fitur analisa:</p>
+
+                    <img src="https://placehold.co/800x400/e2e8f0/1e293b?text=AI+Analysis+and+SWOT+Results" class="screenshot" alt="Hasil Analisa AI">
 
                     <div class="grid md:grid-cols-2 gap-6 mt-6">
                         <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
@@ -154,12 +178,14 @@
                     </div>
                 </section>
 
-                <!-- Section 4 -->
+                <!-- Section 5 -->
                 <section id="history" class="mb-8">
                     <h3 class="flex items-center text-2xl mb-4 text-red-700 dark:text-red-300">
-                        <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-sm mr-3">4</span>
+                        <span class="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-sm mr-3">5</span>
                         Menyimpan & Mengelola Data
                     </h3>
+
+                    <img src="https://placehold.co/800x400/e2e8f0/1e293b?text=History+Manager" class="screenshot" alt="Menu Riwayat">
 
                     <ul class="space-y-2">
                         <li><strong>Simpan (Save):</strong> Klik tombol "SIMPAN" untuk menyimpan snapshot BMC Anda saat ini ke Riwayat.</li>

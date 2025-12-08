@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart BMC - Pro Version</title>
+    <title>BMC Pro - Aplikasi Business Model Canvas powered by AI</title>
     <link rel="icon" type="image/png" href="favicon-32x32.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -213,7 +213,10 @@
     <div id="historyModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl p-6 h-[70vh] flex flex-col" onclick="event.stopPropagation()">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold dark:text-white"><i class="fas fa-history mr-2"></i> Riwayat BMC</h3>
+                <div class="flex items-center gap-4">
+                    <h3 class="text-lg font-bold dark:text-white"><i class="fas fa-history mr-2"></i> Riwayat BMC</h3>
+                    <button onclick="window.deleteAllHistory()" class="text-xs bg-red-100 text-red-700 hover:bg-red-200 px-2 py-1 rounded font-bold uppercase transition">Hapus Semua</button>
+                </div>
                 <button onclick="window.closeModals()" class="text-gray-500 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
             </div>
             <div class="flex-grow overflow-y-auto custom-scroll bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
@@ -476,6 +479,7 @@
             actionPlan: "",
             imagePrompt: ""
         };
+        let lastAutoSaveHash = ""; // To track changes for auto-save
 
         const meta = {
             kp: { t:"Key Partners (Mitra Utama)", d:"Siapa supplier/mitra strategis?", i:"fa-handshake" },
@@ -524,6 +528,11 @@
         }
 
         // --- HISTORY MANAGER ---
+        function generateStateHash(state) {
+            // Simple hash from stringified state
+            return JSON.stringify(state);
+        }
+
         window.saveToHistory = function(manual = true) {
             if(!db) return;
 
@@ -535,10 +544,19 @@
                 return;
             }
 
+            // AUTO-SAVE LOGIC: Check hash
+            const currentHash = generateStateHash(appState);
+            if (!manual) {
+                if (currentHash === lastAutoSaveHash) {
+                    console.log("Auto-save skipped: No changes.");
+                    return; // Skip if no changes
+                }
+            }
+            lastAutoSaveHash = currentHash; // Update hash
+
             const name = document.getElementById('userName').value.trim() || "Tanpa Nama";
             const stage = document.getElementById('userStage').value;
             const now = new Date();
-            const dateStr = now.toLocaleDateString('id-ID').replace(/\//g,''); // ddmmyyyy roughly
             // Format ddmmyyyy manually to be sure
             const dd = String(now.getDate()).padStart(2,'0');
             const mm = String(now.getMonth()+1).padStart(2,'0');
@@ -564,17 +582,8 @@
                     }
                 });
 
-                // If manual, always create new. If auto, maybe debounce?
-                // Requirement: "Auto save on close". We will just save a new version or update if very recent?
-                // The requirement says "Counter angka". So just create new one.
-
                 let finalName = baseName;
                 if(count > 0) finalName = `${baseName} (${count})`;
-
-                // If auto-save, check if we already saved this exact state recently to avoid duplicates?
-                // For simplicity and robustness given the prompt, we save.
-                // But to prevent "Close" triggering duplicate of "Manual Save", we can check hash?
-                // Too complex. Let's just save.
 
                 const historyItem = {
                     id: Date.now(),
@@ -633,11 +642,23 @@
             req.onsuccess = () => {
                 if(req.result) {
                     appState = req.result.data;
+                    lastAutoSaveHash = generateStateHash(appState); // Sync hash to prevent duplicate auto-save
                     restoreUI();
                     window.saveState(); // Update current state
                     window.closeModals();
                     window.showToast("Riwayat dimuat!");
                 }
+            };
+        }
+
+        window.deleteAllHistory = function() {
+            if(!confirm("YAKIN HAPUS SEMUA RIWAYAT? Tindakan ini tidak bisa dibatalkan!")) return;
+            const tx = db.transaction("history", "readwrite");
+            const store = tx.objectStore("history");
+            const req = store.clear();
+            req.onsuccess = () => {
+                window.openHistory(); // Refresh list (will show empty)
+                window.showToast("Semua riwayat dihapus!");
             };
         }
 

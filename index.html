@@ -62,6 +62,7 @@
                 
                 <div class="hidden xl:flex items-center space-x-2">
                     <button onclick="window.openSettings()" class="text-gray-500 hover:text-blue-600 p-2 rounded-lg transition" title="Pengaturan API"><i class="fas fa-cog text-xl"></i></button>
+                    <button onclick="window.openHistory()" class="text-gray-500 hover:text-blue-600 p-2 rounded-lg transition" title="Riwayat"><i class="fas fa-history text-xl"></i></button>
                     <button onclick="window.openInfo()" class="text-gray-500 hover:text-blue-600 text-sm font-medium px-2">Panduan</button>
                     <button onclick="window.toggleTheme()" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><i id="themeIcon" class="fas fa-moon text-xl"></i></button>
                     <span class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></span>
@@ -74,6 +75,7 @@
 
                     <button onclick="window.openAiPrompt()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-magic mr-1"></i> CONTOH</button>
                     <button onclick="window.openImgPrompt()" class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-image mr-1"></i> PROMPT GAMBAR</button>
+                    <button onclick="window.saveToHistory(true)" class="bg-teal-100 text-teal-700 hover:bg-teal-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-save mr-1"></i> SIMPAN</button>
                     <button onclick="window.downloadReport()" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase"><i class="fas fa-file-pdf mr-1"></i> PRINT PDF</button>
                     
                     <!-- EXPORT IMPORT -->
@@ -85,6 +87,7 @@
                 </div>
 
                 <div class="xl:hidden flex items-center gap-2">
+                    <button onclick="window.openHistory()" class="p-2 text-gray-500"><i class="fas fa-history text-lg"></i></button>
                     <button onclick="window.openSettings()" class="p-2 text-gray-500"><i class="fas fa-cog text-lg"></i></button>
                     <button onclick="window.toggleTheme()" class="p-2 text-gray-500"><i id="themeIconMobile" class="fas fa-moon text-lg"></i></button>
                 </div>
@@ -104,15 +107,16 @@
         <!-- Row 2: Main Actions (4 cols) -->
         <div class="grid grid-cols-4 gap-2">
             <button onclick="window.openAiPrompt()" class="bg-indigo-100 text-indigo-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-indigo-200"><i class="fas fa-magic text-sm mb-1"></i> CONTOH</button>
-            <button onclick="window.exportData()" class="bg-blue-100 text-blue-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-blue-200"><i class="fas fa-file-export text-sm mb-1"></i> EXPORT</button>
+            <button onclick="window.saveToHistory(true)" class="bg-teal-100 text-teal-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-teal-200"><i class="fas fa-save text-sm mb-1"></i> SIMPAN</button>
             <button onclick="document.getElementById('fileInput').click()" class="bg-orange-100 text-orange-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-orange-200"><i class="fas fa-file-import text-sm mb-1"></i> IMPORT</button>
             <button onclick="window.downloadReport()" class="bg-green-100 text-green-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-green-200"><i class="fas fa-file-pdf text-sm mb-1"></i> PRINT PDF</button>
         </div>
 
         <!-- Row 3: Secondary Actions (Solid Buttons) -->
-        <div class="grid grid-cols-2 gap-2">
-            <button onclick="window.openImgPrompt()" class="bg-purple-100 text-purple-700 py-3 rounded text-xs font-bold uppercase flex items-center justify-center hover:bg-purple-200"><i class="fas fa-image mr-2"></i> PROMPT GAMBAR</button>
-            <button onclick="window.confirmReset()" class="bg-red-100 text-red-700 py-3 rounded text-xs font-bold uppercase flex items-center justify-center hover:bg-red-200"><i class="fas fa-trash mr-2"></i> CLEAR DATA</button>
+        <div class="grid grid-cols-3 gap-2">
+            <button onclick="window.exportData()" class="bg-blue-100 text-blue-700 py-3 rounded text-[10px] font-bold uppercase flex items-center justify-center hover:bg-blue-200"><i class="fas fa-file-export mr-2"></i> EXPORT</button>
+            <button onclick="window.openImgPrompt()" class="bg-purple-100 text-purple-700 py-3 rounded text-xs font-bold uppercase flex items-center justify-center hover:bg-purple-200"><i class="fas fa-image mr-2"></i> GAMBAR</button>
+            <button onclick="window.confirmReset()" class="bg-red-100 text-red-700 py-3 rounded text-xs font-bold uppercase flex items-center justify-center hover:bg-red-200"><i class="fas fa-trash mr-2"></i> CLEAR</button>
         </div>
 
         <button onclick="window.openInfo()" class="w-full text-center text-xs text-gray-500 underline pt-1">Panduan Lengkap BMC</button>
@@ -200,6 +204,30 @@
             <div class="flex justify-end gap-2">
                 <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">Batal</button>
                 <button onclick="window.saveSettings()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold shadow-lg transform hover:scale-105 transition">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl p-6 h-[70vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold dark:text-white"><i class="fas fa-history mr-2"></i> Riwayat BMC</h3>
+                <button onclick="window.closeModals()" class="text-gray-500 hover:text-red-500 text-xl"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="flex-grow overflow-y-auto custom-scroll bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
+                <table class="w-full text-sm text-left dark:text-gray-200">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3 rounded-tl-lg">Nama & Tanggal</th>
+                            <th class="px-4 py-3 text-right rounded-tr-lg">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyList">
+                        <!-- Items injected here -->
+                    </tbody>
+                </table>
+                <div id="emptyHistory" class="hidden text-center py-10 text-gray-500">Belum ada riwayat tersimpan.</div>
             </div>
         </div>
     </div>
@@ -466,12 +494,15 @@
 
         // --- 2. INDEXED DB ---
         function initDB() {
-            const request = indexedDB.open("SmartBMC_DB", 1);
+            const request = indexedDB.open("SmartBMC_DB", 2);
             request.onerror = (e) => console.error("DB Error", e);
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
                 if (!db.objectStoreNames.contains("state")) {
                     db.createObjectStore("state", { keyPath: "id" });
+                }
+                if (!db.objectStoreNames.contains("history")) {
+                    db.createObjectStore("history", { keyPath: "id" });
                 }
             };
             request.onsuccess = (e) => {
@@ -490,6 +521,153 @@
             
             store.put({ id: "current", data: appState });
         }
+
+        // --- HISTORY MANAGER ---
+        window.saveToHistory = function(manual = true) {
+            if(!db) return;
+
+            // Check if empty
+            let filled = 0;
+            for(let k in appState.bmcData) if(appState.bmcData[k].trim()) filled++;
+            if(filled === 0 && !appState.analysisHTML) {
+                if(manual) window.showToast("Data masih kosong!");
+                return;
+            }
+
+            const name = document.getElementById('userName').value.trim() || "Tanpa Nama";
+            const stage = document.getElementById('userStage').value;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID').replace(/\//g,''); // ddmmyyyy roughly
+            // Format ddmmyyyy manually to be sure
+            const dd = String(now.getDate()).padStart(2,'0');
+            const mm = String(now.getMonth()+1).padStart(2,'0');
+            const yyyy = now.getFullYear();
+            const baseName = `${name}_${stage}-${dd}${mm}${yyyy}`;
+
+            const tx = db.transaction("history", "readwrite");
+            const store = tx.objectStore("history");
+            const req = store.getAll();
+
+            req.onsuccess = () => {
+                const items = req.result;
+                // Filter for same base name to find counter
+                let count = 0;
+                items.forEach(item => {
+                    if(item.name.startsWith(baseName)) {
+                         // Check for exact match or counter
+                         if(item.name === baseName) count = Math.max(count, 1);
+                         else {
+                             const parts = item.name.match(/\((\d+)\)$/);
+                             if(parts) count = Math.max(count, parseInt(parts[1]) + 1);
+                         }
+                    }
+                });
+
+                // If manual, always create new. If auto, maybe debounce?
+                // Requirement: "Auto save on close". We will just save a new version or update if very recent?
+                // The requirement says "Counter angka". So just create new one.
+
+                let finalName = baseName;
+                if(count > 0) finalName = `${baseName} (${count})`;
+
+                // If auto-save, check if we already saved this exact state recently to avoid duplicates?
+                // For simplicity and robustness given the prompt, we save.
+                // But to prevent "Close" triggering duplicate of "Manual Save", we can check hash?
+                // Too complex. Let's just save.
+
+                const historyItem = {
+                    id: Date.now(),
+                    name: finalName,
+                    data: JSON.parse(JSON.stringify(appState)), // Deep copy
+                    date: now.toISOString()
+                };
+
+                store.add(historyItem);
+                if(manual) window.showToast("Riwayat berhasil disimpan!");
+            };
+        }
+
+        window.openHistory = function() {
+            if(!db) return;
+            window.toggle('historyModal', true);
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<tr><td colspan="2" class="p-4 text-center"><i class="fas fa-spinner fa-spin"></i></td></tr>';
+
+            const tx = db.transaction("history", "readonly");
+            const store = tx.objectStore("history");
+            const req = store.getAll();
+
+            req.onsuccess = () => {
+                const items = req.result.sort((a,b) => b.id - a.id); // Newest first
+                list.innerHTML = '';
+                if(items.length === 0) {
+                    document.getElementById('emptyHistory').classList.remove('hidden');
+                } else {
+                    document.getElementById('emptyHistory').classList.add('hidden');
+                    items.forEach(item => {
+                        const date = new Date(item.date).toLocaleString('id-ID');
+                        const tr = document.createElement('tr');
+                        tr.className = "bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600";
+                        tr.innerHTML = `
+                            <td class="px-4 py-3 cursor-pointer" onclick="window.loadHistoryItem(${item.id})">
+                                <div class="font-bold text-gray-900 dark:text-white">${item.name}</div>
+                                <div class="text-xs text-gray-500">${date}</div>
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <button onclick="window.renameHistoryItem(${item.id}, '${item.name}')" class="text-blue-600 hover:text-blue-800 mr-3" title="Ganti Nama"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.deleteHistoryItem(${item.id})" class="text-red-600 hover:text-red-800" title="Hapus"><i class="fas fa-trash"></i></button>
+                            </td>
+                        `;
+                        list.appendChild(tr);
+                    });
+                }
+            };
+        }
+
+        window.loadHistoryItem = function(id) {
+            if(!confirm("Load data ini? Data yang belum disimpan akan hilang.")) return;
+            const tx = db.transaction("history", "readonly");
+            const store = tx.objectStore("history");
+            const req = store.get(id);
+            req.onsuccess = () => {
+                if(req.result) {
+                    appState = req.result.data;
+                    restoreUI();
+                    window.saveState(); // Update current state
+                    window.closeModals();
+                    window.showToast("Riwayat dimuat!");
+                }
+            };
+        }
+
+        window.deleteHistoryItem = function(id) {
+            if(!confirm("Hapus riwayat ini permanen?")) return;
+            const tx = db.transaction("history", "readwrite");
+            const store = tx.objectStore("history");
+            store.delete(id);
+            tx.oncomplete = () => window.openHistory(); // Refresh list
+        }
+
+        window.renameHistoryItem = function(id, oldName) {
+            const newName = prompt("Nama baru:", oldName);
+            if(newName && newName !== oldName) {
+                const tx = db.transaction("history", "readwrite");
+                const store = tx.objectStore("history");
+                store.get(id).onsuccess = (e) => {
+                    const data = e.target.result;
+                    data.name = newName;
+                    store.put(data);
+                    window.openHistory(); // Refresh
+                };
+            }
+        }
+
+        // Auto Save on Hidden (Close/Switch Tab)
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "hidden") {
+                window.saveToHistory(false);
+            }
+        });
 
         function loadState() {
             if(!db) return;

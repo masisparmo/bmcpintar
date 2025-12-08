@@ -140,7 +140,10 @@
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 flex flex-col h-[500px]">
-                <div class="p-4 bg-gray-800 text-white font-bold"><i class="fas fa-comments mr-2"></i> Chat Konsultasi</div>
+                <div class="p-4 bg-gray-800 text-white font-bold flex justify-between items-center">
+                    <span><i class="fas fa-comments mr-2"></i> Chat Konsultasi</span>
+                    <button onclick="window.clearChat()" class="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded transition" title="Hapus Riwayat Chat"><i class="fas fa-trash"></i> CLEAR</button>
+                </div>
                 <div id="chatHistory" class="p-4 flex-grow overflow-y-auto custom-scroll space-y-3 bg-gray-50 dark:bg-gray-900/50">
                     <div class="flex items-start gap-2">
                         <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">AI</div>
@@ -686,6 +689,14 @@
             }
         }
 
+        window.clearChat = function() {
+            if(!confirm("Yakin ingin menghapus semua riwayat chat?")) return;
+            appState.chatHistory = [{role:'ai', content:'Halo! Ada yang ingin didiskusikan tentang bisnis Anda?'}];
+            renderChat();
+            window.saveState();
+            window.showToast("Riwayat chat dihapus");
+        }
+
         window.sendChat = async function(e) {
             e.preventDefault();
             const inp = document.getElementById('chatInput');
@@ -751,7 +762,7 @@
         document.getElementById('confirmYesBtn').onclick = () => { if(onConfirmCallback) onConfirmCallback(); window.closeModals(); };
 
         window.openImgPrompt = function() {
-            let val = k => (appState.bmcData[k]||"N/A").replace(/\n/g,", ").substring(0,100);
+            let val = k => (appState.bmcData[k]||"N/A").replace(/\n/g,", ");
             let txt = `Create vertical 9:16 Infographic Poster for BMC.\nTopic: ${document.getElementById('userName').value}\n` +
             `Partners: ${val('kp')}\nActivities: ${val('ka')}\nResources: ${val('kr')}\nValue: ${val('vp')}\nRelationships: ${val('cr')}\nChannels: ${val('ch')}\nSegments: ${val('cs')}\nCosts: ${val('cst')}\nRevenue: ${val('rs')}\nStyle: Modern flat vector, blue-orange theme. --ar 9:16`;
             document.getElementById('imgPromptText').value = txt;
@@ -761,7 +772,44 @@
         window.downloadReport = function() {
              const name = document.getElementById('userName').value || "Bisnis";
              const getVal = (k) => (appState.bmcData[k]||"-").replace(/\n/g,'<br>');
-             const html = `<!DOCTYPE html><html><head><title>Laporan BMC</title><style>body{font-family:sans-serif;padding:20px}.box{border:1px solid #333;padding:10px;margin-bottom:10px}h3{margin:0 0 5px;border-bottom:1px solid #ccc}</style></head><body><h1>Laporan BMC: ${name}</h1>${Object.keys(meta).map(k=>`<div class="box"><h3>${meta[k].t}</h3><p>${getVal(k)}</p></div>`).join('')}<hr><h2>Analisa</h2>${appState.analysisHTML}<script>window.print()<\/script></body></html>`;
+
+             // Format Chat History
+             const chatContent = appState.chatHistory.map(msg =>
+                `<div style="margin-bottom:10px; padding:10px; background-color: ${msg.role === 'ai' ? '#f0f0f0' : '#e6f3ff'}; border-radius:5px; border: 1px solid #ddd;">
+                    <strong style="color: ${msg.role === 'ai' ? '#4f46e5' : '#2563eb'};">${msg.role === 'ai' ? 'AI Coach' : 'Anda'}:</strong>
+                    <div style="margin-top:5px;">${marked.parse(msg.content)}</div>
+                </div>`
+             ).join('');
+
+             const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Laporan BMC</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; max-width: 800px; mx-auto; }
+                        .box { border: 1px solid #333; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+                        h3 { margin: 0 0 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; color: #333; }
+                        h1 { text-align: center; color: #1a56db; }
+                        h2 { border-bottom: 2px solid #1a56db; padding-bottom: 10px; margin-top: 30px; color: #1a56db; }
+                        .prose { line-height: 1.6; }
+                        .prose ul { padding-left: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Laporan BMC: ${name}</h1>
+                    ${Object.keys(meta).map(k=>`<div class="box"><h3>${meta[k].t}</h3><p>${getVal(k)}</p></div>`).join('')}
+
+                    <h2>Analisa Masalah</h2>
+                    <div class="prose">${marked.parse(appState.analysisHTML || "Belum ada analisa.")}</div>
+
+                    <h2>Riwayat Konsultasi</h2>
+                    <div class="chat-section">${chatContent || "Belum ada konsultasi."}</div>
+
+                    <script>window.print()<\/script>
+                </body>
+                </html>`;
+
              const blob = new Blob([html], {type:'text/html'});
              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Laporan_${name}.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }

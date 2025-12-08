@@ -133,12 +133,16 @@
                 <button onclick="window.generateSWOT()" id="swotBtn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow transition transform hover:scale-105 text-sm"><i class="fas fa-bolt mr-2"></i> Analisa SWOT</button>
                 <button onclick="window.generatePitchDeck()" id="pitchBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow transition transform hover:scale-105 text-sm"><i class="fas fa-layer-group mr-2"></i> Pitch Deck</button>
             </div>
+            <button onclick="window.openActionPlan()" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 w-full max-w-md"><i class="fas fa-list-check mr-2"></i> Action Plan (Rencana Aksi)</button>
         </div>
 
         <div id="analysisSection" class="hidden grid lg:grid-cols-2 gap-6">
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 flex flex-col h-[500px]">
                 <div class="p-4 bg-indigo-600 text-white font-bold flex justify-between items-center">
-                    <span><i class="fas fa-clipboard-check mr-2"></i> Hasil Analisa</span>
+                    <div class="flex items-center gap-2">
+                        <span><i class="fas fa-clipboard-check mr-2"></i> Hasil Analisa</span>
+                        <button onclick="window.openEditAnalysis()" class="text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded transition" title="Edit Hasil Analisa"><i class="fas fa-edit"></i> Edit</button>
+                    </div>
                     <span id="stageLabel" class="text-xs bg-white/20 px-2 py-1 rounded">Umum</span>
                 </div>
                 <div id="analysisContent" class="p-5 flex-grow overflow-y-auto custom-scroll prose dark:prose-invert max-w-none text-sm"></div>
@@ -357,6 +361,40 @@
         </div>
     </div>
 
+    <!-- Analysis Edit Modal -->
+    <div id="analysisEditModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl p-6 h-[80vh] flex flex-col" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-4 dark:text-white"><i class="fas fa-edit mr-2"></i> Edit Hasil Analisa</h3>
+            <textarea id="analysisInput" class="flex-grow w-full p-4 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none resize-none" placeholder="Hasil analisa (Markdown)..."></textarea>
+            <div class="mt-4 flex justify-end gap-2 shrink-0">
+                <button onclick="window.closeModals()" class="px-4 py-2 border rounded text-sm dark:text-white dark:border-gray-600">Batal</button>
+                <button onclick="window.saveEditAnalysis()" class="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 font-bold shadow-lg">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Plan Modal -->
+    <div id="actionPlanModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl p-0 h-[85vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="bg-teal-600 px-6 py-4 flex justify-between items-center shrink-0 rounded-t-lg">
+                <h3 class="text-lg font-bold text-white"><i class="fas fa-list-check mr-2"></i> Action Plan (30 Hari)</h3>
+                <button onclick="window.closeModals()" class="text-white hover:text-gray-200 text-2xl">&times;</button>
+            </div>
+
+            <div id="actionPlanContent" class="p-6 overflow-y-auto custom-scroll flex-grow prose dark:prose-invert max-w-none text-sm bg-gray-50 dark:bg-gray-900/50">
+                <div class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-clipboard-list text-6xl mb-4 opacity-20"></i>
+                    <p>Belum ada Action Plan.</p>
+                </div>
+            </div>
+
+            <div class="p-4 border-t dark:border-gray-700 flex justify-between shrink-0 bg-white dark:bg-gray-800 rounded-b-lg gap-2">
+                <button onclick="window.downloadActionPlanPDF()" class="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg font-bold text-sm transition"><i class="fas fa-file-pdf mr-2"></i> Download PDF</button>
+                <button onclick="window.generateActionPlan()" id="btnGenAction" class="px-6 py-2 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700 transition shadow-lg"><i class="fas fa-magic mr-2"></i> Buat Rencana Aksi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- AI Prompt Modal -->
     <div id="aiModal" class="fixed inset-0 z-50 hidden bg-gray-900/75 flex items-center justify-center p-4" onclick="window.closeModals()">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6" onclick="event.stopPropagation()">
@@ -406,6 +444,7 @@
             bmcData: { kp:"",ka:"",kr:"",vp:"",cr:"",ch:"",cs:"",cst:"",rs:"" },
             chatHistory: [{role:'ai', content:'Halo! Ada yang ingin didiskusikan tentang bisnis Anda?'}],
             analysisHTML: "",
+            actionPlan: "",
             imagePrompt: ""
         };
 
@@ -474,7 +513,7 @@
             renderCanvas();
             if(appState.analysisHTML) {
                 document.getElementById('analysisSection').classList.remove('hidden');
-                document.getElementById('analysisContent').innerHTML = appState.analysisHTML;
+                document.getElementById('analysisContent').innerHTML = marked.parse(appState.analysisHTML);
             }
             renderChat();
         }
@@ -599,6 +638,136 @@
             renderCanvas();
             window.saveState();
             window.closeModals();
+        }
+
+        window.openEditAnalysis = function() {
+            if(!appState.analysisHTML) return alert("Belum ada hasil analisa untuk diedit.");
+            document.getElementById('analysisInput').value = appState.analysisHTML;
+            window.toggle('analysisEditModal', true);
+        }
+
+        window.saveEditAnalysis = function() {
+            const val = document.getElementById('analysisInput').value;
+            appState.analysisHTML = val;
+
+            // Re-render
+            let clean = val;
+            if (clean.startsWith('```markdown')) clean = clean.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+            else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+            document.getElementById('analysisContent').innerHTML = marked.parse(clean);
+            window.saveState();
+            window.closeModals();
+            window.showToast("Hasil analisa diperbarui!");
+        }
+
+        window.openActionPlan = function() {
+            window.toggle('actionPlanModal', true);
+            const content = document.getElementById('actionPlanContent');
+            if (appState.actionPlan) {
+                content.innerHTML = marked.parse(appState.actionPlan);
+                document.getElementById('btnGenAction').innerHTML = '<i class="fas fa-sync mr-2"></i> Buat Ulang';
+            } else {
+                content.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-clipboard-list text-6xl mb-4 opacity-20"></i>
+                    <p>Klik tombol "Buat Rencana Aksi" untuk memulai.</p>
+                </div>`;
+                document.getElementById('btnGenAction').innerHTML = '<i class="fas fa-magic mr-2"></i> Buat Rencana Aksi';
+            }
+        }
+
+        window.generateActionPlan = async function() {
+            let filled=0; for(let k in appState.bmcData) if(appState.bmcData[k].trim()) filled++;
+            if(filled<3) return alert("Isi minimal 3 kotak BMC sebelum membuat Action Plan.");
+
+            const btn = document.getElementById('btnGenAction');
+            const originalText = btn.innerHTML;
+            btn.disabled=true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Loading...';
+
+            const content = document.getElementById('actionPlanContent');
+            content.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full space-y-4">
+                    <i class="fas fa-rocket fa-bounce text-4xl text-teal-500"></i>
+                    <p class="font-bold text-gray-700 dark:text-gray-200">Sedang Menyusun Rencana Aksi...</p>
+                </div>
+            `;
+
+            const stage = document.getElementById('userStage').value;
+            const prompt = `Berdasarkan Business Model Canvas ini: ${JSON.stringify(appState.bmcData)} dan tahap bisnis "${stage}", buatkan **Action Plan (Rencana Aksi)** yang detail dan taktis untuk 30 hari ke depan.
+            Prioritaskan langkah yang paling berdampak (High Impact, Low Effort).
+            Format Output (Markdown):
+            - **Minggu 1: Fondasi & Validasi** (Daftar To-Do)
+            - **Minggu 2: Eksekusi & Pemasaran** (Daftar To-Do)
+            - **Minggu 3: Operasional & Review** (Daftar To-Do)
+            - **Minggu 4: Scale & Evaluasi** (Daftar To-Do)
+            - **Prioritas Utama** (3 Hal wajib)
+            Bahasa Indonesia.`;
+
+            try {
+                const res = await callApi(prompt, false);
+                let clean = res;
+                if (clean.startsWith('```markdown')) clean = clean.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+                else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+                appState.actionPlan = clean;
+                content.innerHTML = marked.parse(clean);
+                window.saveState();
+                btn.innerHTML = '<i class="fas fa-sync mr-2"></i> Buat Ulang';
+            } catch(e) {
+                alert("Gagal membuat Action Plan");
+                content.innerHTML = '<p class="text-red-500 text-center">Gagal memuat. Silakan coba lagi.</p>';
+            } finally {
+                btn.disabled=false;
+            }
+        }
+
+        window.downloadActionPlanPDF = function() {
+            if(!appState.actionPlan) return alert("Belum ada Action Plan untuk didownload.");
+
+            const name = document.getElementById('userName').value || "Bisnis Saya";
+            const date = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Action Plan: ${name}</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #333; }
+                        header { border-bottom: 2px solid #0d9488; padding-bottom: 20px; margin-bottom: 30px; text-align: center; }
+                        h1 { margin: 0; color: #0f766e; }
+                        .meta { color: #666; margin-top: 10px; font-size: 0.9em; }
+                        .content h2 { color: #0d9488; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; }
+                        .content ul { padding-left: 20px; }
+                        .content li { margin-bottom: 8px; }
+                        strong { color: #0f766e; }
+                        @media print { body { padding: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <header>
+                        <h1>ACTION PLAN 30 HARI</h1>
+                        <div class="meta">
+                            <strong>Bisnis:</strong> ${name}<br>
+                            <strong>Tanggal:</strong> ${date}
+                        </div>
+                    </header>
+                    <div class="content">
+                        ${marked.parse(appState.actionPlan)}
+                    </div>
+                    <script>window.print()<\/script>
+                </body>
+                </html>`;
+
+             const blob = new Blob([html], {type:'text/html'});
+             const url = URL.createObjectURL(blob);
+             const a = document.createElement('a');
+             a.href = url;
+             a.download = `ActionPlan_${name.replace(/\s+/g,'_')}.html`;
+             document.body.appendChild(a);
+             a.click();
+             document.body.removeChild(a);
         }
 
         // --- SETTINGS LOGIC ---

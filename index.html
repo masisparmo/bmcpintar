@@ -126,8 +126,13 @@
 
         <div class="bmc-grid mb-10" id="canvasGrid"></div>
 
-        <div class="flex justify-center mb-10">
-            <button onclick="window.analyzeData()" id="analyzeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105"><i class="fas fa-brain mr-2"></i> Analisa Bisnis Saya (AI Coach)</button>
+        <div class="flex flex-col items-center justify-center mb-10 gap-4">
+            <button onclick="window.analyzeData()" id="analyzeBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105 w-full max-w-md"><i class="fas fa-brain mr-2"></i> Analisa Bisnis Saya (AI Coach)</button>
+
+            <div class="flex gap-4 w-full max-w-md">
+                <button onclick="window.generateSWOT()" id="swotBtn" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg shadow transition transform hover:scale-105 text-sm"><i class="fas fa-bolt mr-2"></i> Analisa SWOT</button>
+                <button onclick="window.generatePitchDeck()" id="pitchBtn" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow transition transform hover:scale-105 text-sm"><i class="fas fa-layer-group mr-2"></i> Pitch Deck</button>
+            </div>
         </div>
 
         <div id="analysisSection" class="hidden grid lg:grid-cols-2 gap-6">
@@ -140,7 +145,10 @@
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow border dark:border-gray-700 flex flex-col h-[500px]">
-                <div class="p-4 bg-gray-800 text-white font-bold"><i class="fas fa-comments mr-2"></i> Chat Konsultasi</div>
+                <div class="p-4 bg-gray-800 text-white font-bold flex justify-between items-center">
+                    <span><i class="fas fa-comments mr-2"></i> Chat Konsultasi</span>
+                    <button onclick="window.clearChat()" class="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded transition" title="Hapus Riwayat Chat"><i class="fas fa-trash"></i> CLEAR</button>
+                </div>
                 <div id="chatHistory" class="p-4 flex-grow overflow-y-auto custom-scroll space-y-3 bg-gray-50 dark:bg-gray-900/50">
                     <div class="flex items-start gap-2">
                         <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">AI</div>
@@ -686,6 +694,92 @@
             }
         }
 
+        window.generateSWOT = async function() {
+            let filled=0; for(let k in appState.bmcData) if(appState.bmcData[k].trim()) filled++;
+            if(filled<3) return alert("Isi minimal 3 kotak BMC sebelum membuat SWOT.");
+
+            const btn = document.getElementById('swotBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled=true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Loading...';
+            document.getElementById('analysisSection').classList.remove('hidden');
+
+            // Scroll to analysis
+            document.getElementById('analysisSection').scrollIntoView({behavior: 'smooth'});
+
+            const prompt = `Berdasarkan BMC ini: ${JSON.stringify(appState.bmcData)}, buatkan Analisa SWOT (Strengths, Weaknesses, Opportunities, Threats) yang detail. Output in Markdown format with '## Analisa SWOT' as the first header. Bahasa Indonesia.`;
+
+            try {
+                const res = await callApi(prompt, false);
+                let clean = res;
+                if (clean.startsWith('```markdown')) clean = clean.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+                else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+                // Append to existing analysis
+                if(appState.analysisHTML) {
+                    appState.analysisHTML += "\n\n---\n\n" + clean;
+                } else {
+                    appState.analysisHTML = clean;
+                }
+
+                document.getElementById('analysisContent').innerHTML = marked.parse(appState.analysisHTML);
+                window.saveState();
+                window.showToast("Analisa SWOT berhasil ditambahkan!");
+            } catch(e) {
+                alert("Gagal membuat SWOT");
+                console.error(e);
+            } finally {
+                btn.disabled=false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        window.generatePitchDeck = async function() {
+            let filled=0; for(let k in appState.bmcData) if(appState.bmcData[k].trim()) filled++;
+            if(filled<3) return alert("Isi minimal 3 kotak BMC sebelum membuat Pitch Deck.");
+
+            const btn = document.getElementById('pitchBtn');
+            const originalText = btn.innerHTML;
+            btn.disabled=true; btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Loading...';
+            document.getElementById('analysisSection').classList.remove('hidden');
+
+             // Scroll to analysis
+            document.getElementById('analysisSection').scrollIntoView({behavior: 'smooth'});
+
+            const prompt = `Berdasarkan BMC ini: ${JSON.stringify(appState.bmcData)}, buatkan Kerangka Slide Pitch Deck untuk presentasi ke investor. Buat 10-12 slide. Output in Markdown format with '## Kerangka Pitch Deck' as the first header. Bahasa Indonesia.`;
+
+            try {
+                const res = await callApi(prompt, false);
+                let clean = res;
+                if (clean.startsWith('```markdown')) clean = clean.replace(/^```markdown\s*/, '').replace(/\s*```$/, '');
+                else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
+                // Append to existing analysis
+                if(appState.analysisHTML) {
+                    appState.analysisHTML += "\n\n---\n\n" + clean;
+                } else {
+                    appState.analysisHTML = clean;
+                }
+
+                document.getElementById('analysisContent').innerHTML = marked.parse(appState.analysisHTML);
+                window.saveState();
+                window.showToast("Pitch Deck berhasil ditambahkan!");
+            } catch(e) {
+                alert("Gagal membuat Pitch Deck");
+                console.error(e);
+            } finally {
+                btn.disabled=false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        window.clearChat = function() {
+            if(!confirm("Yakin ingin menghapus semua riwayat chat?")) return;
+            appState.chatHistory = [{role:'ai', content:'Halo! Ada yang ingin didiskusikan tentang bisnis Anda?'}];
+            renderChat();
+            window.saveState();
+            window.showToast("Riwayat chat dihapus");
+        }
+
         window.sendChat = async function(e) {
             e.preventDefault();
             const inp = document.getElementById('chatInput');
@@ -751,7 +845,7 @@
         document.getElementById('confirmYesBtn').onclick = () => { if(onConfirmCallback) onConfirmCallback(); window.closeModals(); };
 
         window.openImgPrompt = function() {
-            let val = k => (appState.bmcData[k]||"N/A").replace(/\n/g,", ").substring(0,100);
+            let val = k => (appState.bmcData[k]||"N/A").replace(/\n/g,", ");
             let txt = `Create vertical 9:16 Infographic Poster for BMC.\nTopic: ${document.getElementById('userName').value}\n` +
             `Partners: ${val('kp')}\nActivities: ${val('ka')}\nResources: ${val('kr')}\nValue: ${val('vp')}\nRelationships: ${val('cr')}\nChannels: ${val('ch')}\nSegments: ${val('cs')}\nCosts: ${val('cst')}\nRevenue: ${val('rs')}\nStyle: Modern flat vector, blue-orange theme. --ar 9:16`;
             document.getElementById('imgPromptText').value = txt;
@@ -761,7 +855,44 @@
         window.downloadReport = function() {
              const name = document.getElementById('userName').value || "Bisnis";
              const getVal = (k) => (appState.bmcData[k]||"-").replace(/\n/g,'<br>');
-             const html = `<!DOCTYPE html><html><head><title>Laporan BMC</title><style>body{font-family:sans-serif;padding:20px}.box{border:1px solid #333;padding:10px;margin-bottom:10px}h3{margin:0 0 5px;border-bottom:1px solid #ccc}</style></head><body><h1>Laporan BMC: ${name}</h1>${Object.keys(meta).map(k=>`<div class="box"><h3>${meta[k].t}</h3><p>${getVal(k)}</p></div>`).join('')}<hr><h2>Analisa</h2>${appState.analysisHTML}<script>window.print()<\/script></body></html>`;
+
+             // Format Chat History
+             const chatContent = appState.chatHistory.map(msg =>
+                `<div style="margin-bottom:10px; padding:10px; background-color: ${msg.role === 'ai' ? '#f0f0f0' : '#e6f3ff'}; border-radius:5px; border: 1px solid #ddd;">
+                    <strong style="color: ${msg.role === 'ai' ? '#4f46e5' : '#2563eb'};">${msg.role === 'ai' ? 'AI Coach' : 'Anda'}:</strong>
+                    <div style="margin-top:5px;">${marked.parse(msg.content)}</div>
+                </div>`
+             ).join('');
+
+             const html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Laporan BMC</title>
+                    <style>
+                        body { font-family: sans-serif; padding: 40px; max-width: 800px; mx-auto; }
+                        .box { border: 1px solid #333; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+                        h3 { margin: 0 0 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; color: #333; }
+                        h1 { text-align: center; color: #1a56db; }
+                        h2 { border-bottom: 2px solid #1a56db; padding-bottom: 10px; margin-top: 30px; color: #1a56db; }
+                        .prose { line-height: 1.6; }
+                        .prose ul { padding-left: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Laporan BMC: ${name}</h1>
+                    ${Object.keys(meta).map(k=>`<div class="box"><h3>${meta[k].t}</h3><p>${getVal(k)}</p></div>`).join('')}
+
+                    <h2>Analisa Masalah</h2>
+                    <div class="prose">${marked.parse(appState.analysisHTML || "Belum ada analisa.")}</div>
+
+                    <h2>Riwayat Konsultasi</h2>
+                    <div class="chat-section">${chatContent || "Belum ada konsultasi."}</div>
+
+                    <script>window.print()<\/script>
+                </body>
+                </html>`;
+
              const blob = new Blob([html], {type:'text/html'});
              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Laporan_${name}.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }

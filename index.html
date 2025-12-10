@@ -808,6 +808,8 @@
             code = String(code || "");
             language = String(language || "");
 
+            if (!code.trim()) return "";
+
             // Check if it's markdown or contains typical prompt markers
             // We look for 'markdown' language OR patterns typical in prompt generation
             const isPrompt = (language === 'markdown') ||
@@ -815,13 +817,26 @@
 
             if (isPrompt) {
                 // Render as Rich Text Box
-                // To avoid infinite recursion if the inner text contains code blocks,
-                // we should ideally use a fresh marked instance or basic parsing.
-                // However, marked.parse uses global options.
-                // Since prompt text usually doesn't contain nested code blocks, recursion is low risk,
-                // BUT if it does, stack overflow.
-                // Safe fix: Strip triple backticks from inner code before parsing to prevent nested blocks.
-                const safeCode = code.replace(/```/g, "'''");
+
+                let cleanCode = code.trim();
+
+                // Strip external wrapping inside the code block content if it exists.
+                // Often AI puts another ```markdown wrapper inside the block content.
+                const startRegex = /^(\s*)(`{3,}|'{3,})(markdown|md)?(\s*\n)?/i;
+                const endRegex = /(\n\s*)?(`{3,}|'{3,})(\s*)$/i;
+
+                if (startRegex.test(cleanCode)) {
+                    cleanCode = cleanCode.replace(startRegex, '$1');
+                    cleanCode = cleanCode.replace(/^(\s*)(`{3,}|'{3,})(markdown|md)?\s*/i, '');
+                }
+
+                if (endRegex.test(cleanCode)) {
+                    cleanCode = cleanCode.replace(/(\s*)(`{3,}|'{3,})\s*$/i, '');
+                }
+
+                // Safety Replace: If there are STILL backticks (nested deeply), replace them to prevent recursion
+                const safeCode = cleanCode.replace(/```/g, "'''");
+
                 const htmlContent = marked.parse(safeCode);
 
                 return `<div class="rich-prompt-box">

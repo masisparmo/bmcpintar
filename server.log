@@ -1,0 +1,4 @@
+127.0.0.1 - - [10/Dec/2025 04:22:22] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [10/Dec/2025 04:22:22] "GET /logo-bmc_pintar_ku.png HTTP/1.1" 200 -
+127.0.0.1 - - [10/Dec/2025 04:23:20] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [10/Dec/2025 04:23:20] "GET /logo-bmc_pintar_ku.png HTTP/1.1" 200 -

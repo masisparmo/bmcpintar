@@ -812,8 +812,15 @@
 
             // Check if it's markdown or contains typical prompt markers
             // We look for 'markdown' language OR patterns typical in prompt generation
-            const isPrompt = (language === 'markdown') ||
-                             (code.includes('**') && (code.includes('* ') || code.includes('- ')));
+            // UPDATED: Relaxed logic to catch lists even without bold markers (user feedback)
+            const isList = /^\s*[\*\-]\s+/m.test(code) || /^\s*\d+\.\s+/m.test(code);
+            const isBold = code.includes('**');
+            const isMarkdownLang = language === 'markdown' || language === 'md';
+
+            // Avoid capturing real code (like JS comments with *)
+            const isCodeLang = ['js','javascript','python','py','html','css','json','bash','sql'].includes(language.toLowerCase());
+
+            const isPrompt = !isCodeLang && (isMarkdownLang || isList || isBold);
 
             if (isPrompt) {
                 // Render as Rich Text Box

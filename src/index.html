@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -121,14 +121,14 @@
                     <img src="logo-bmc_pintar_ku.png" alt="Logo" class="h-10 w-auto">
                     <h1 class="text-lg font-bold text-gray-900 dark:text-white">Smart BMC <span class="text-xs font-normal opacity-70">Pro</span></h1>
                 </div>
-                
+
                 <div class="hidden xl:flex items-center space-x-2">
                     <button onclick="window.openSettings()" class="text-gray-500 hover:text-blue-600 p-2 rounded-lg transition" title="Pengaturan API"><i class="fas fa-cog text-xl"></i></button>
                     <button onclick="window.openHistory()" class="text-gray-500 hover:text-blue-600 p-2 rounded-lg transition" title="Riwayat"><i class="fas fa-history text-xl"></i></button>
                     <button onclick="window.openInfo()" class="text-gray-500 hover:text-blue-600 text-sm font-medium px-2 uppercase">Panduan</button>
                     <button onclick="window.toggleTheme()" class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><i id="themeIcon" class="fas fa-moon text-xl"></i></button>
                     <span class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1"></span>
-                    
+
                     <select id="userStage" onchange="window.syncStage(this.value)" class="bg-gray-50 border border-gray-300 text-sm rounded-lg p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white w-32">
                         <option value="aspiring">🌱 Ideasi</option>
                         <option value="beginner">🚀 Start-up</option>
@@ -139,11 +139,11 @@
                     <button onclick="window.openImgPrompt()" class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase">PROMPT GAMBAR</button>
                     <button onclick="window.saveToHistory(true)" class="bg-teal-100 text-teal-700 hover:bg-teal-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase">SIMPAN</button>
                     <button onclick="window.downloadReport()" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase">PRINT PDF</button>
-                    
+
                     <!-- EXPORT IMPORT -->
                     <button onclick="window.exportData()" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase">EXPORT</button>
                     <button onclick="document.getElementById('fileInput').click()" class="bg-orange-100 text-orange-700 hover:bg-orange-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase">IMPORT</button>
-                    
+
                     <!-- CLEAR DATA (Now a Solid Button) -->
                     <button onclick="window.confirmReset()" class="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-2 rounded-lg text-xs font-bold transition uppercase">CLEAR DATA</button>
                 </div>
@@ -165,7 +165,7 @@
             <option value="beginner">🚀 Start-up (Baru berjalan)</option>
             <option value="scaleup">📈 Scale-up (Ingin ekspansi)</option>
         </select>
-        
+
         <!-- Row 2: Main Actions (4 cols) -->
         <div class="grid grid-cols-4 gap-2">
             <button onclick="window.openAiPrompt()" class="bg-indigo-100 text-indigo-700 py-3 rounded text-[10px] font-bold uppercase flex flex-col items-center justify-center hover:bg-indigo-200">CONTOH</button>
@@ -306,7 +306,7 @@
             </div>
             <div class="p-6 overflow-y-auto custom-scroll">
                 <div class="prose dark:prose-invert max-w-none text-sm space-y-8">
-                    
+
                     <div class="mb-8">
                         <p><strong>BMC</strong> atau <strong>Business Model Canvas</strong> adalah alat visual yang digunakan untuk merancang, menggambarkan, dan menganalisis model bisnis suatu perusahaan atau usaha. Alat ini dikembangkan oleh <em>Alexander Osterwalder</em> dan telah menjadi alat yang populer digunakan oleh pengusaha, manajer bisnis, dan perusahaan startup.</p>
 
@@ -324,7 +324,7 @@
                     <div class="bg-blue-50 dark:bg-gray-700 p-5 rounded-xl border-l-4 border-blue-500">
                         <h4 class="text-blue-800 dark:text-blue-300 font-bold text-lg mb-2">Apa itu BMC? (Analogi Rumah Makan)</h4>
                         <p class="text-gray-700 dark:text-gray-200 text-base">
-                            Bayangkan bisnis itu seperti sebuah <strong>Rumah Makan</strong>. 
+                            Bayangkan bisnis itu seperti sebuah <strong>Rumah Makan</strong>.
                             <br>BMC membagi rumah makan itu menjadi 3 area utama:
                             <ul class="mt-2 list-disc pl-5">
                                 <li><strong>Panggung Depan (Front Stage):</strong> Ruang makan di mana Anda melayani tamu (Pelanggan, Channel, Hubungan).</li>
@@ -338,7 +338,7 @@
                         <!-- COLUMN 1: Front Stage + Revenue -->
                         <div>
                             <h4 class="font-bold text-indigo-600 dark:text-indigo-400 border-b border-gray-200 pb-2 mb-4 uppercase tracking-wider"><i class="fas fa-store mr-2"></i> PANGGUNG DEPAN (YANG DILIHAT PELANGGAN)</h4>
-                            
+
                             <div class="space-y-6">
                                 <div>
                                     <strong class="text-lg text-gray-900 dark:text-white block">1. Customer Segments (Target Pasar)</strong>
@@ -395,7 +395,7 @@
                         <!-- COLUMN 2: Back Stage + Cost -->
                         <div>
                             <h4 class="font-bold text-orange-600 dark:text-orange-400 border-b border-gray-200 pb-2 mb-4 uppercase tracking-wider"><i class="fas fa-tools mr-2"></i> PANGGUNG BELAKANG (DAPUR)</h4>
-                            
+
                             <div class="space-y-6">
                                 <div>
                                     <strong class="text-lg text-gray-900 dark:text-white block">6. Key Resources (Aset Wajib)</strong>

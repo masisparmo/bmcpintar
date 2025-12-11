@@ -45,6 +45,67 @@
         .dark .progress-container { background-color: #4b5563; }
         .progress-bar { height: 100%; background-color: #2563eb; width: 0%; animation: progressIndeterminate 2s infinite ease-in-out; }
         @keyframes progressIndeterminate { 0% { width: 0%; margin-left: 0; } 50% { width: 70%; margin-left: 15%; } 100% { width: 0%; margin-left: 100%; } }
+
+        /* Chat & Markdown Fixes */
+        .prose pre {
+            white-space: pre-wrap !important;       /* Wrap long lines in code blocks */
+            word-wrap: break-word !important;       /* Break long words */
+            background-color: #1e293b !important;   /* Dark background for contrast */
+            color: #e2e8f0 !important;              /* Light text */
+            padding: 1rem !important;
+            border-radius: 0.5rem !important;
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace !important; /* Distinct font */
+            margin-top: 0.75em !important;
+            margin-bottom: 0.75em !important;
+            overflow-x: hidden !important;          /* Prevent horizontal scroll, force wrap */
+        }
+        /* Custom "Rich Prompt" Box */
+        .rich-prompt-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #4f46e5;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            font-family: 'Inter', sans-serif; /* Back to normal font for readability */
+            color: #334155;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .dark .rich-prompt-box {
+            background-color: #1e293b;
+            border-left-color: #818cf8;
+            color: #e2e8f0;
+        }
+        .rich-prompt-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #4f46e5;
+            margin-bottom: 0.5rem;
+            display: block;
+            letter-spacing: 0.05em;
+        }
+        .dark .rich-prompt-label { color: #818cf8; }
+
+        .prose code {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 0.25em;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #d946ef; /* Fuchsia-600 for visibility */
+        }
+        .dark .prose code {
+            background-color: rgba(255,255,255,0.1);
+            color: #f0abfc;
+        }
+        .prose pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+            font-weight: normal;
+        }
     </style>
 </head>
 <body class="text-gray-800 bg-gray-50 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
@@ -732,6 +793,74 @@
         }
 
         // --- 3. UI RENDERING ---
+        // Configure Marked.js Custom Renderer for Rich Prompts
+        const renderer = new marked.Renderer();
+        const originalCode = renderer.code.bind(renderer);
+
+        renderer.code = function(code, language, isEscaped) {
+            // Handle Marked.js v5+ / v12+ signature where the first arg might be a token object
+            if (typeof code === 'object' && code !== null) {
+                language = code.lang || "";
+                code = code.text || "";
+            }
+
+            // Ensure inputs are strings
+            code = String(code || "");
+            language = String(language || "");
+
+            if (!code.trim()) return "";
+
+            // Check if it's markdown or contains typical prompt markers
+            // We look for 'markdown' language OR patterns typical in prompt generation
+            // UPDATED: Relaxed logic to catch lists even without bold markers (user feedback)
+            const isList = /^\s*[\*\-]\s+/m.test(code) || /^\s*\d+\.\s+/m.test(code);
+            const isBold = code.includes('**');
+            const isMarkdownLang = language === 'markdown' || language === 'md';
+
+            // Avoid capturing real code (like JS comments with *)
+            const isCodeLang = ['js','javascript','python','py','html','css','json','bash','sql'].includes(language.toLowerCase());
+
+            const isPrompt = !isCodeLang && (isMarkdownLang || isList || isBold);
+
+            if (isPrompt) {
+                // Render as Rich Text Box
+
+                let cleanCode = code.trim();
+
+                // Strip external wrapping inside the code block content if it exists.
+                // Often AI puts another ```markdown wrapper inside the block content.
+                const startRegex = /^(\s*)(`{3,}|'{3,})(markdown|md)?(\s*\n)?/i;
+                const endRegex = /(\n\s*)?(`{3,}|'{3,})(\s*)$/i;
+
+                if (startRegex.test(cleanCode)) {
+                    cleanCode = cleanCode.replace(startRegex, '$1');
+                    cleanCode = cleanCode.replace(/^(\s*)(`{3,}|'{3,})(markdown|md)?\s*/i, '');
+                }
+
+                if (endRegex.test(cleanCode)) {
+                    cleanCode = cleanCode.replace(/(\s*)(`{3,}|'{3,})\s*$/i, '');
+                }
+
+                // Safety Replace: If there are STILL backticks (nested deeply), replace them to prevent recursion
+                const safeCode = cleanCode.replace(/```/g, "'''");
+
+                const htmlContent = marked.parse(safeCode);
+
+                return `<div class="rich-prompt-box">
+                            <span class="rich-prompt-label"><i class="fas fa-terminal mr-1"></i> AI Prompt / Detail</span>
+                            <div class="prose dark:prose-invert max-w-none text-sm">${htmlContent}</div>
+                        </div>`;
+            }
+
+            // Fallback to default code block for other languages
+            // We implement simple code block rendering to avoid issues with calling originalCode
+            const langClass = language ? 'language-' + language : '';
+            // Basic escaping for safety
+            const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<pre><code class="${langClass}">${escaped}</code></pre>`;
+        };
+        marked.setOptions({ renderer: renderer });
+
         function initGrid() {
             const grid = document.getElementById('canvasGrid');
             grid.innerHTML = '';
@@ -770,18 +899,53 @@
             hist.innerHTML = '';
             appState.chatHistory.forEach(msg => {
                 const isAI = msg.role === 'ai';
+
+                // Outer Wrapper
                 const div = document.createElement('div');
-                div.className = `flex ${isAI ? 'justify-start' : 'justify-end'}`;
+                div.className = `flex ${isAI ? 'justify-start' : 'justify-end'} mb-4`;
 
-                const displayContent = isAI ? marked.parse(msg.content) : msg.content;
+                // Avatar (AI only)
+                if (isAI) {
+                    const avatar = document.createElement('div');
+                    avatar.className = "w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2 shrink-0";
+                    avatar.innerText = "AI";
+                    div.appendChild(avatar);
+                }
 
-                div.innerHTML = `
-                    ${isAI ? '<div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold mr-2">AI</div>' : ''}
-                    <div class="${isAI ? 'bg-white dark:bg-gray-700 border dark:border-gray-600' : 'bg-blue-600 text-white'} p-3 rounded-lg text-sm shadow-sm max-w-[85%] dark:text-white prose dark:prose-invert">
-                        ${displayContent}
-                        ${isAI ? `<button onclick="window.copyText('${msg.content.replace(/'/g, "\\'").replace(/\n/g, ' ')}')" class="ml-2 text-gray-400 hover:text-blue-500"><i class="fas fa-copy"></i></button>` : ''}
-                    </div>
-                `;
+                // Bubble Container
+                const bubble = document.createElement('div');
+                bubble.className = isAI
+                    ? "bg-white dark:bg-gray-700 border dark:border-gray-600 p-4 rounded-xl text-sm shadow-sm max-w-[85%] dark:text-white flex flex-col gap-2 min-w-0"
+                    : "bg-blue-600 text-white p-3 rounded-lg text-sm shadow-sm max-w-[85%] break-words";
+
+                // Content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = isAI ? "prose dark:prose-invert max-w-none text-sm leading-relaxed break-words" : "break-words whitespace-pre-wrap";
+
+                if (isAI) {
+                    // AI content parsed with Marked
+                    contentDiv.innerHTML = marked.parse(msg.content);
+                } else {
+                    // User content as plain text (safe)
+                    contentDiv.innerText = msg.content;
+                }
+                bubble.appendChild(contentDiv);
+
+                // Copy Button (AI only) - Distinct Row
+                if (isAI) {
+                    const actionRow = document.createElement('div');
+                    actionRow.className = "flex justify-end pt-2 mt-1 border-t border-gray-100 dark:border-gray-600";
+
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = "flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition uppercase px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600";
+                    copyBtn.innerHTML = '<i class="fas fa-copy"></i> Salin Jawaban';
+                    copyBtn.onclick = () => window.copyText(msg.content);
+
+                    actionRow.appendChild(copyBtn);
+                    bubble.appendChild(actionRow);
+                }
+
+                div.appendChild(bubble);
                 hist.appendChild(div);
             });
             hist.scrollTop = hist.scrollHeight;
@@ -1235,14 +1399,16 @@
         }
 
         window.downloadReport = function() {
-             const name = document.getElementById('userName').value || "Bisnis";
+             const name = document.getElementById('userName').value || "Bisnis Tanpa Nama";
+             const stage = document.getElementById('userStage').options[document.getElementById('userStage').selectedIndex].text;
+             const dateStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
              const getVal = (k) => (appState.bmcData[k]||"-").replace(/\n/g,'<br>');
 
              // Format Chat History
              const chatContent = appState.chatHistory.map(msg =>
-                `<div style="margin-bottom:10px; padding:10px; background-color: ${msg.role === 'ai' ? '#f0f0f0' : '#e6f3ff'}; border-radius:5px; border: 1px solid #ddd;">
-                    <strong style="color: ${msg.role === 'ai' ? '#4f46e5' : '#2563eb'};">${msg.role === 'ai' ? 'AI Coach' : 'Anda'}:</strong>
-                    <div style="margin-top:5px;">${marked.parse(msg.content)}</div>
+                `<div style="margin-bottom:15px; padding:15px; background-color: ${msg.role === 'ai' ? '#f8fafc' : '#eff6ff'}; border-radius:8px; border-left: 4px solid ${msg.role === 'ai' ? '#4f46e5' : '#3b82f6'};">
+                    <strong style="color: ${msg.role === 'ai' ? '#4338ca' : '#1e40af'}; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.05em; display:block; margin-bottom: 5px;">${msg.role === 'ai' ? 'AI Coach' : 'Pemilik Bisnis'}:</strong>
+                    <div style="font-size: 0.95em; line-height: 1.6; color: #334155;">${marked.parse(msg.content)}</div>
                 </div>`
              ).join('');
 
@@ -1250,33 +1416,87 @@
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Laporan BMC</title>
+                    <title>Laporan Profesional - ${name}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
                     <style>
-                        body { font-family: sans-serif; padding: 40px; max-width: 800px; mx-auto; }
-                        .box { border: 1px solid #333; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
-                        h3 { margin: 0 0 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; color: #333; }
-                        h1 { text-align: center; color: #1a56db; }
-                        h2 { border-bottom: 2px solid #1a56db; padding-bottom: 10px; margin-top: 30px; color: #1a56db; }
-                        .prose { line-height: 1.6; }
+                        @page { size: A4; margin: 20mm 20mm 20mm 30mm; } /* Left margin 30mm for binding */
+                        body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.5; margin: 0; padding: 20px; }
+
+                        /* HEADER (KOP) */
+                        header { border-bottom: 2px solid #1e293b; padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .brand h1 { font-family: 'Merriweather', serif; font-size: 24pt; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+                        .brand p { margin: 5px 0 0; color: #64748b; font-size: 10pt; }
+                        .meta { text-align: right; font-size: 10pt; color: #64748b; }
+                        .meta strong { color: #0f172a; display: block; margin-bottom: 2px; }
+
+                        /* SECTIONS */
+                        h2 { font-family: 'Merriweather', serif; color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-top: 40px; margin-bottom: 20px; font-size: 16pt; }
+                        h3 { font-family: 'Inter', sans-serif; font-size: 11pt; color: #334155; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+
+                        /* BMC BOXES */
+                        .bmc-container { display: flex; flex-direction: column; gap: 15px; }
+                        .box { border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; padding: 20px; background: #fff; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); page-break-inside: avoid; }
+                        .box p { margin: 0; color: #334155; font-size: 11pt; }
+
+                        /* CONTENT STYLING */
+                        .prose { font-family: 'Merriweather', serif; font-size: 11pt; line-height: 1.8; color: #334155; text-align: justify; }
+                        .prose h1, .prose h2, .prose h3 { font-family: 'Inter', sans-serif; color: #0f172a; margin-top: 1.5em; }
                         .prose ul { padding-left: 20px; }
+                        .prose li { margin-bottom: 5px; }
+                        .prose strong { color: #0f172a; }
+
+                        /* FOOTER */
+                        footer { border-top: 1px solid #e2e8f0; margin-top: 50px; padding-top: 20px; text-align: center; font-size: 9pt; color: #94a3b8; }
+
+                        /* PRINT OPTIMIZATION */
+                        @media print {
+                            body { padding: 0; }
+                            .box { break-inside: avoid; }
+                            h2 { break-after: avoid; }
+                        }
                     </style>
                 </head>
                 <body>
-                    <h1>Laporan BMC: ${name}</h1>
-                    ${Object.keys(meta).map(k=>`<div class="box"><h3>${meta[k].t}</h3><p>${getVal(k)}</p></div>`).join('')}
+                    <header>
+                        <div class="brand">
+                            <h1>${name}</h1>
+                            <p>Laporan Business Model Canvas</p>
+                        </div>
+                        <div class="meta">
+                            <strong>Tahap Bisnis:</strong> ${stage}<br>
+                            ${dateStr}
+                        </div>
+                    </header>
 
-                    <h2>Analisa Masalah</h2>
-                    <div class="prose">${marked.parse(appState.analysisHTML || "Belum ada analisa.")}</div>
+                    <h2>1. Sembilan Elemen Kunci (BMC)</h2>
+                    <div class="bmc-container">
+                        ${Object.keys(meta).map(k=>`
+                            <div class="box">
+                                <h3>${meta[k].t}</h3>
+                                <p>${getVal(k)}</p>
+                            </div>`).join('')}
+                    </div>
 
-                    <h2>Riwayat Konsultasi</h2>
-                    <div class="chat-section">${chatContent || "Belum ada konsultasi."}</div>
+                    <h2>2. Analisa Mendalam & Strategi</h2>
+                    <div class="prose">
+                        ${marked.parse(appState.analysisHTML || "<em>Belum ada analisa yang dibuat.</em>")}
+                    </div>
+
+                    <h2>3. Riwayat Konsultasi AI</h2>
+                    <div class="chat-section">
+                        ${chatContent || "<p style='text-align:center; color:#94a3b8;'><em>Belum ada sesi konsultasi.</em></p>"}
+                    </div>
+
+                    <footer>
+                        Dibuat dengan <strong>BMC Pro AI</strong> &bull; ${dateStr}
+                    </footer>
 
                     <script>window.print()<\/script>
                 </body>
                 </html>`;
 
              const blob = new Blob([html], {type:'text/html'});
-             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Laporan_${name}.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Laporan_Profesional_${name.replace(/[^a-zA-Z0-9]/g,'_')}.html`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
         
         window.copyToClipboard = function(txt) {
